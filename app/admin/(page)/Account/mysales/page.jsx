@@ -111,7 +111,7 @@ export default function Page() {
   return (
     <div className="p-4 md:p-6 text-sm">
       <Toaster />
-      <h1 className="text-xl md:text-2xl text-blue-400  border-b pb-2 mb-4 capitalize ">
+      <h1 className="text-xl md:text-2xl text-blue-400 capitalize   border-b pb-2 mb-4 ">
         Monthly Sale Commission
       </h1>
 
