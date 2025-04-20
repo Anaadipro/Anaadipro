@@ -6,15 +6,17 @@ import { useSession } from "next-auth/react";
 export default function Page() {
   const [data, setData] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [userdata, setUserdata] = useState("");
+  const [userdata, setUserdata] = useState(null);
+  const [userds, setUserds] = useState("");
   const { data: session } = useSession();
 
   useEffect(() => {
+    if (!session?.user?.email) return;
     const fetchUserData = async () => {
-      if (!session?.user?.email) return;
       try {
         const res = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
         setUserdata(res.data);
+        setUserds(res.data.dscode);
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
@@ -23,9 +25,10 @@ export default function Page() {
   }, [session?.user?.email]);
 
   useEffect(() => {
+    if (!userds) return;
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/3months/fetch/all');
+        const res = await fetch(`/api/3months/findds/${userds}`);
         const json = await res.json();
         if (json.success) {
           setData(json.data[0] || null);
@@ -37,81 +40,72 @@ export default function Page() {
       }
     };
     fetchData();
-  }, []);
+  }, [userds]);
 
   const formatDateRange = (from, to) => {
     const fromDate = new Date(from);
     const toDate = new Date(to);
-    const sameMonth = fromDate.getMonth() === toDate.getMonth();
-    const sameYear = fromDate.getFullYear() === toDate.getFullYear();
-
     const options = { day: '2-digit', month: 'short' };
     const fromStr = fromDate.toLocaleDateString('en-GB', options);
     const toStr = toDate.toLocaleDateString('en-GB', options);
 
-    return sameMonth && sameYear
+    return fromDate.getMonth() === toDate.getMonth() && fromDate.getFullYear() === toDate.getFullYear()
       ? `${fromDate.getDate()} to ${toStr} ${toDate.getFullYear()}`
       : `${fromStr} to ${toStr} ${toDate.getFullYear()}`;
   };
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FEECE2] to-[#F7DED0] flex items-center justify-center p-6">
-        <div className="text-2xl text-[#FFBE98] font-bold animate-pulse">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-[#FEECE2] to-[#F7DED0] flex items-center justify-center p-4">
+        <div className="text-xl sm:text-2xl text-[#FFBE98] font-semibold animate-pulse">Loading...</div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">
+      <div className="min-h-screen flex items-center justify-center p-4 text-lg sm:text-xl text-gray-500">
         No Bonanza data found.
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center p-6 ">
-      <div className="w-full bg-white shadow-xl p-10 border border-gray-100 space-y-10 ">
-        {/* Header */}
-        <h1 className="text-5xl font-bold text-center text-gray-800 tracking-tight">
-          Bonanza Pendency
-        </h1>
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-6xl bg-white shadow-lg p-6 sm:p-10 border border-gray-100 rounded-lg space-y-8">
+        <h1 className="text-3xl sm:text-5xl font-bold text-center text-gray-800">Bonanza Pendency</h1>
 
-        {/* Date Range and Title */}
-        <div className="text-center bg-gradient-to-r from-[#FFEFE6] to-[#FFF7F0] text-gray-700 p-5  font-medium shadow-sm">
+        <div className="text-center bg-gradient-to-r from-[#FFEFE6] to-[#FFF7F0] text-gray-700 p-4 sm:p-5 font-medium shadow-sm rounded-md">
           {formatDateRange(data.datefrom, data.dateto)}
-          <div className="text-2xl text-blue-800 mt-2 bg-white rounded p-2">{data.title}</div>
+          <div className="text-lg sm:text-2xl text-blue-800 mt-2 bg-white inline-block rounded px-3 py-1">{data.title}</div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm sm:text-base rounded-xl overflow-hidden">
+          <table className="w-full text-sm sm:text-base text-left rounded-xl overflow-hidden">
             <thead className="bg-[#FFEFE6] text-gray-800">
               <tr>
-                <th className="p-4 font-semibold tracking-wide">Type</th>
-                <th className="p-4 font-semibold tracking-wide">Current</th>
-                <th className="p-4 font-semibold tracking-wide">Target</th>
-                <th className="p-4 font-semibold tracking-wide">Remain</th>
+                <th className="p-3 sm:p-4 font-semibold">Type</th>
+                <th className="p-3 sm:p-4 font-semibold">Current Achieve</th>
+                <th className="p-3 sm:p-4 font-semibold">Target</th>
+                <th className="p-3 sm:p-4 font-semibold">Remain</th>
               </tr>
             </thead>
             <tbody className="text-gray-600">
-              <tr className="border-t border-gray-100 hover:bg-[#FFF7F0] transition-all duration-300">
-                <td className="p-4 font-medium">SAO SP</td>
-                <td className="p-4">{userdata?.saosp || 0} SP</td>
-                <td className="p-4">{data?.sao || 0} SP</td>
-                <td className="p-4 text-rose-500 font-semibold">
-                  {Math.max(0, (data?.sao || 0) - (userdata?.saosp || 0))} SP
-                </td>
-              </tr>
-              <tr className="border-t border-gray-100 hover:bg-[#FFF7F0] transition-all duration-300">
-                <td className="p-4 font-medium">SGO SP</td>
-                <td className="p-4">{userdata?.sgosp || 0} SP</td>
-                <td className="p-4">{data?.sgo || 0} SP</td>
-                <td className="p-4 text-rose-500 font-semibold">
-                  {Math.max(0, (data?.sgo || 0) - (userdata?.sgosp || 0))} SP
-                </td>
-              </tr>
+              {['SAO', 'SGO'].map(type => {
+                const userSP = userdata?.[`${type.toLowerCase()}sp`] || 0;
+                const baseSP = data?.UserDetails?.[0]?.[`${type.toLowerCase()}sp`] || 0;
+                const target = data?.[type.toLowerCase()] || 0;
+                const current = userSP - baseSP;
+                const remain = Math.max(0, target - current);
+                return (
+                  <tr key={type} className="border-t border-gray-100 hover:bg-[#FFF7F0] transition">
+                    <td className="p-3 sm:p-4 font-medium">{type} SP</td>
+                    <td className="p-3 sm:p-4">{current} SP</td>
+                    <td className="p-3 sm:p-4">{target} SP</td>
+                    <td className="p-3 sm:p-4 text-rose-500 font-semibold">{remain} SP</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

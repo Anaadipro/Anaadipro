@@ -3,23 +3,28 @@ import UserModel from "@/model/User";
 import OrderModel from "@/model/Order";
 import moment from "moment";
 
-async function getTeamChain(ds, visited = new Set()) {
+async function buildTeamTree(ds, allUsersMap, visited = new Set()) {
   if (visited.has(ds)) return [];
   visited.add(ds);
-  const directMembers = await UserModel.find({ pdscode: ds });
+
+  const directMembers = allUsersMap.get(ds) || [];
   let team = [...directMembers];
+
   for (const member of directMembers) {
-    const subTeam = await getTeamChain(member.dscode, visited);
-    team = [...team, ...subTeam];
+    const subTeam = await buildTeamTree(member.dscode, allUsersMap, visited);
+    team.push(...subTeam);
   }
+
   return team;
 }
 
 export async function GET(request) {
   await dbConnect();
+
   try {
     const url = new URL(request.url);
     const ds = url.pathname.split("/").pop();
+
     if (!ds) {
       return Response.json({ message: "Invalid request! dscode missing.", success: false }, { status: 400 });
     }
@@ -29,9 +34,22 @@ export async function GET(request) {
       return Response.json({ message: "User not found!", success: false }, { status: 404 });
     }
 
-    const teamUsers = await getTeamChain(ds);
+    // Fetch all users at once
+    const allUsers = await UserModel.find({});
+    const allUsersMap = new Map();
+
+    allUsers.forEach(user => {
+      if (!allUsersMap.has(user.pdscode)) {
+        allUsersMap.set(user.pdscode, []);
+      }
+      allUsersMap.get(user.pdscode).push(user);
+    });
+
+    // Build the team tree
+    const teamUsers = await buildTeamTree(ds, allUsersMap);
     teamUsers.unshift(mainUser);
 
+    // Same analytics
     const totalSGO = teamUsers.filter(user => user.group === "SGO").length;
     const totalSAO = teamUsers.filter(user => user.group === "SAO").length;
     const totalActiveSGO = teamUsers.filter(user => user.group === "SGO" && user.usertype === "1").length;
@@ -83,6 +101,7 @@ export async function GET(request) {
       currentWeekSaoSP,
       currentWeekSgoSP,
     }, { status: 200 });
+
   } catch (error) {
     console.error("Error getting team stats:", error);
     return Response.json({ message: "Error fetching data!", success: false }, { status: 500 });

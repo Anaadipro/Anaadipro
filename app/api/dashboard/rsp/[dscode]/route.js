@@ -12,131 +12,136 @@ export async function GET(request, { params }) {
         const dateFrom = url.searchParams.get("dateFrom");
         const dateTo = url.searchParams.get("dateTo");
 
-        let filter = { dscode, status: true };
-
-        if (dateFrom || dateTo) {
-            filter.createdAt = {};
-            if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
-            if (dateTo) {
-                const endDate = new Date(dateTo);
-                endDate.setHours(23, 59, 59, 999);
-                filter.createdAt.$lte = endDate;
-            }
-        }
-
-        // Fetch the oldest order to exclude
-        // Fetch the oldest order for this specific dscode
-        const oldestOrder = await OrderModel.findOne({ dscode })
-            .sort({ createdAt: 1 })
-            .select("_id")
-            .lean();
-
-        if (oldestOrder) {
-            filter._id = { $ne: oldestOrder._id };
-        }
-
-
-        // Get current week's start (Monday) and end (Sunday)
         const weekStart = moment().startOf("isoWeek").toDate();
         const weekEnd = moment().endOf("isoWeek").toDate();
 
-        // Fetch total data for individual user
-        const [totalData, currentWeekData] = await Promise.all([
+        const baseFilter = { dscode, status: true };
+        if (dateFrom || dateTo) {
+            baseFilter.createdAt = {};
+            if (dateFrom) baseFilter.createdAt.$gte = new Date(dateFrom);
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                baseFilter.createdAt.$lte = endDate;
+            }
+        }
+
+        // Fetch the oldest order ID once
+        const oldestOrder = await OrderModel.findOne({ dscode }).sort({ createdAt: 1 }).select("_id").lean();
+        if (oldestOrder) {
+            baseFilter._id = { $ne: oldestOrder._id };
+        }
+
+        // Flatten team fetching
+        const allUsers = await UserModel.find({}).select("dscode pdscode").lean();
+        const userMap = new Map();
+        allUsers.forEach(user => {
+            if (!userMap.has(user.pdscode)) userMap.set(user.pdscode, []);
+            userMap.get(user.pdscode).push(user.dscode);
+        });
+
+        function collectTeamCodes(code, collected = new Set()) {
+            if (!collected.has(code)) {
+                collected.add(code);
+                const children = userMap.get(code) || [];
+                children.forEach(child => collectTeamCodes(child, collected));
+            }
+            return collected;
+        }
+
+        const teamDSCodes = Array.from(collectTeamCodes(dscode));
+        const teamFilter = {
+            dscode: { $in: teamDSCodes },
+            status: true,
+            ...(oldestOrder && { _id: { $ne: oldestOrder._id } }),
+        };
+
+        // Aggregations
+        const [individual, team] = await Promise.all([
             OrderModel.aggregate([
-                { $match: filter },
+                { $match: baseFilter },
                 {
-                    $group: {
-                        _id: null,
-                        totalOrders: { $sum: 1 },
-                        totalsp: { $sum: { $toDouble: "$totalsp" } }
+                    $facet: {
+                        total: [
+                            {
+                                $group: {
+                                    _id: null,
+                                    totalOrders: { $sum: 1 },
+                                    totalsp: { $sum: { $toDouble: "$totalsp" } }
+                                }
+                            }
+                        ],
+                        currentWeek: [
+                            {
+                                $match: {
+                                    createdAt: { $gte: weekStart, $lte: weekEnd }
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: null,
+                                    currentWeekOrders: { $sum: 1 },
+                                    currentWeekTotal: { $sum: { $toDouble: "$totalsp" } }
+                                }
+                            }
+                        ]
                     }
                 }
             ]),
-            OrderModel.aggregate([
-                {
-                    $match: {
-                        ...filter,
-                        createdAt: { $gte: weekStart, $lte: weekEnd }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        currentWeekOrders: { $sum: 1 },
-                        currentWeekTotal: { $sum: { $toDouble: "$totalsp" } }
-                    }
-                }
-            ])
-        ]);
-
-        // **Fetch Team Data (Including Self)**
-        async function getTeamDSCodes(parentDscode) {
-            const team = await UserModel.find({ pdscode: parentDscode }).select("dscode").lean();
-            let teamDSCodes = team.map(user => user.dscode);
-            for (let user of team) {
-                const subTeam = await getTeamDSCodes(user.dscode);
-                teamDSCodes = [...teamDSCodes, ...subTeam];
-            }
-            return teamDSCodes;
-        }
-
-        let teamDSCodes = await getTeamDSCodes(dscode);
-        teamDSCodes.push(dscode); // Include self in team
-
-        const teamFilter = { dscode: { $in: teamDSCodes }, status: true };
-
-        if (oldestOrder) {
-            teamFilter._id = { $ne: oldestOrder._id };
-        }
-
-        const [teamTotalData, teamCurrentWeekData] = await Promise.all([
             OrderModel.aggregate([
                 { $match: teamFilter },
                 {
-                    $group: {
-                        _id: null,
-                        totalOrders: { $sum: 1 },
-                        totalsp: { $sum: { $toDouble: "$totalsp" } }
-                    }
-                }
-            ]),
-            OrderModel.aggregate([
-                {
-                    $match: {
-                        ...teamFilter,
-                        createdAt: { $gte: weekStart, $lte: weekEnd }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        currentWeekOrders: { $sum: 1 },
-                        currentWeekTotal: { $sum: { $toDouble: "$totalsp" } }
+                    $facet: {
+                        total: [
+                            {
+                                $group: {
+                                    _id: null,
+                                    totalOrders: { $sum: 1 },
+                                    totalsp: { $sum: { $toDouble: "$totalsp" } }
+                                }
+                            }
+                        ],
+                        currentWeek: [
+                            {
+                                $match: {
+                                    createdAt: { $gte: weekStart, $lte: weekEnd }
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: null,
+                                    currentWeekOrders: { $sum: 1 },
+                                    currentWeekTotal: { $sum: { $toDouble: "$totalsp" } }
+                                }
+                            }
+                        ]
                     }
                 }
             ])
         ]);
+
+        const indTotal = individual[0]?.total[0] || {};
+        const indWeek = individual[0]?.currentWeek[0] || {};
+        const teamTotal = team[0]?.total[0] || {};
+        const teamWeek = team[0]?.currentWeek[0] || {};
 
         return Response.json(
             {
                 success: true,
-                totalOrders: totalData[0]?.totalOrders || 0,
-                totalsp: totalData[0]?.totalsp || 0,
-                currentWeekOrders: currentWeekData[0]?.currentWeekOrders || 0,
-                currentWeekTotal: currentWeekData[0]?.currentWeekTotal || 0,
+                totalOrders: indTotal.totalOrders || 0,
+                totalsp: indTotal.totalsp || 0,
+                currentWeekOrders: indWeek.currentWeekOrders || 0,
+                currentWeekTotal: indWeek.currentWeekTotal || 0,
 
-                teamTotalOrders: teamTotalData[0]?.totalOrders || 0,
-                teamTotalsp: teamTotalData[0]?.totalsp || 0,
-                teamCurrentWeekOrders: teamCurrentWeekData[0]?.currentWeekOrders || 0,
-                teamCurrentWeekTotal: teamCurrentWeekData[0]?.currentWeekTotal || 0
+                teamTotalOrders: teamTotal.totalOrders || 0,
+                teamTotalsp: teamTotal.totalsp || 0,
+                teamCurrentWeekOrders: teamWeek.currentWeekOrders || 0,
+                teamCurrentWeekTotal: teamWeek.currentWeekTotal || 0
             },
             { status: 200 }
         );
     } catch (error) {
         console.error("Error fetching data:", error);
-        return Response.json(
-            { message: "Error fetching data!", success: false },
-            { status: 500 }
-        );
+        return Response.json({ message: "Error fetching data!", success: false }, { status: 500 });
     }
 }

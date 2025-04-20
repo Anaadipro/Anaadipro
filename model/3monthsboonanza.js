@@ -7,12 +7,19 @@ const MonthsSchema = new Schema(
         sgo: { type: String, required: true },
         datefrom: { type: String, required: true },
         dateto: { type: String, required: true },
+        UserDetails: [
+            {
+              dsid: { type: String, },
+              saosp: { type: String, },
+              sgosp: { type: String, }
+            }
+          ],
         defaultdata: { type: String, required: true, default: "months" }
     },
     { timestamps: true }
 );
 
 const MonthsModel =
-    mongoose.models.Monthstest4 || mongoose.model("Monthstest4", MonthsSchema);
+    mongoose.models.Monthstest5 || mongoose.model("Monthstest5", MonthsSchema);
 
 export default MonthsModel;

@@ -21,11 +21,11 @@ export default function page() {
       <Dashboard4 />
 
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl overflow-y-auto max-h-screen w-full md:w-4/5 lg:w-3/4 p-6 relative">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center ">
+          <div className="bg-white rounded-lg shadow-xl overflow-y-auto max-h-screen w-full md:w-4/5 lg:w-3/4 px-6 py-12 relative">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-white bg-red-600 hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-50"
+              className="absolute top-6 right-4 text-white bg-red-600 hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-50"
             >
               ×
             </button>
