@@ -10,7 +10,7 @@ export default function Footer() {
       <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 uppercase tracking-wide">
         ANAADIPRO WELLNESS
       </h2>
-      <p className="mt-1 text-gray-600">Empowering Health & Wellness Since 2014</p>
+      <p className="mt-1 text-gray-600">Empowering Health & Wellness Since 2025</p>
     </div>
 
     {/* Navigation Links */}
