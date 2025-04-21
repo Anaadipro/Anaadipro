@@ -46,6 +46,23 @@ export default function Page() {
         }
     };
 
+    const handleDelete = async (id) => {
+        if (loading) return;
+
+        setLoading(true);
+        setError("");
+        setSuccess("");
+        try {
+            const response = await axios.delete(`/api/Product/Group/delete/${id}`);
+            setSuccess(response.data.message || "Product group deleted successfully.");
+            fetchProductGroups(); // Re-fetch the updated list of product groups
+        } catch (error) {
+            setError(error.response?.data?.message || "Failed to delete product group.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="p-4 mx-auto bg-white dark:bg-gray-800 shadow-md dark:shadow-none border border-gray-100 dark:border-gray-600 rounded-md">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add Product Group</h2>
@@ -78,8 +95,17 @@ export default function Page() {
                 <ul className="mt-2 space-y-2">
                     {productGroups.length > 0 ? (
                         productGroups.map((group) => (
-                            <li key={group._id} className="p-2 border border-gray-100 dark:border-gray-600 rounded bg-gray-100  dark:bg-gray-700 text-gray-800 dark:text-gray-100">
-                                {group.groupname}
+                            <li
+                                key={group._id}
+                                className="p-2 border border-gray-100 dark:border-gray-600 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 flex justify-between items-center"
+                            >
+                                <span>{group.groupname}</span>
+                                <button
+                                    onClick={() => handleDelete(group._id)}
+                                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                >
+                                    Delete
+                                </button>
                             </li>
                         ))
                     ) : (
