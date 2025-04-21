@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Order from "@/components/Order/Order";
 import UserVerify from "@/components/UserVerify/UserVerify";
@@ -9,11 +9,11 @@ import Link from "next/link";
 export default function UserProfile() {
   const { id } = useParams();
   const decodedId = decodeURIComponent(id);
-
+  const router = useRouter();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [success, setSuccess] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -31,6 +31,30 @@ export default function UserProfile() {
 
     fetchData();
   }, [decodedId]);
+
+
+  const handleDelete = async () => {
+    if (!decodedId) return;
+
+    const confirmDelete = confirm("Are you sure you want to delete this user?");
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    try {
+      await axios.delete(`/api/user/delete/${decodedId}`);
+      setSuccess("User deleted successfully.");
+
+      // Redirect after deletion
+      setTimeout(() => {
+        router.push("/superadmin/Userprofile/user"); // Redirect after deletion
+      }, 1500);
+    } catch (error) {
+      console.error("Delete error:", error);
+      setError("Failed to delete user.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -50,6 +74,9 @@ export default function UserProfile() {
 
   return (
     <div className=" mx-auto p-1 lg:p-2 bg-white dark:bg-gray-800 dark:shadow-none dark:border shadow-lg rounded-lg mt-6">
+      {success && (
+        <p className="text-center text-green-500 font-semibold">{success}</p>
+      )}
       <div className="flex flex-wrap items-center gap-6 border-b pb-4 mb-4">
         <div className=" flex justify-center items-center w-full lg:w-fit">
           <Image
@@ -67,6 +94,10 @@ export default function UserProfile() {
           <div className="flex flex-wrap gap-2 items-center  xl:justify-start justify-center space-x-3">
             <h2 className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium px-3 py-1 rounded-lg text-sm shadow">
               DsId : {userData?.dscode}
+            </h2>
+
+            <h2 className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium px-3 py-1 rounded-lg text-sm shadow">
+              Sponsor Id : {userData?.pdscode}
             </h2>
             <h3 className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 font-medium px-3 py-1 rounded-lg text-sm shadow">
               Group : {userData?.group}
@@ -209,6 +240,15 @@ export default function UserProfile() {
           <StatusCard label="User Type" text={getUserType(userData.usertype)} />
         </div>
       </Section>
+
+      <div className="  mt-5 flex  justify-end">
+
+        {decodedId && (
+          <button type="button" onClick={handleDelete} disabled={loading} className=" bg-red-500 text-sm px-2 py-1 rounded text-white">
+            Delete
+          </button>
+        )}
+      </div>
     </div>
   );
 }
