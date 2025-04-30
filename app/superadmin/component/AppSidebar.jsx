@@ -13,6 +13,13 @@ const navItems = [
     },
     {
         icon: <ListCheck />,
+        name: "Report",
+        subItems: [
+            { name: "UserReport", path: "/superadmin/Report/UserReport", pro: false },
+        ],
+    },
+    {
+        icon: <ListCheck />,
         name: "Orders",
         subItems: [
             { name: "Approved", path: "/superadmin/order/approvedorder", pro: false },

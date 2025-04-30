@@ -22,7 +22,9 @@ export async function PATCH(req) {
                 { status: 404 }
             );
         }
-
+        if (data.usertype === "1") {
+            data.activedate = new Date();  // Add the current date
+          }
         // Hash password if provided
         if (data.password) {
             data.password = await bcrypt.hash(data.password, 10);

@@ -84,6 +84,7 @@ const UserSchema = new Schema(
     status: { type: String, enum: ["0", "1"], default: "0", required: true },
     usertype: { type: String, enum: ["0", "1", "2"], default: "0", required: true },
     activesp: { type: String },
+    activedate: { type: Date },
     defaultdata: { type: String, required: true, default: "user" },
   },
   { timestamps: true }
@@ -109,6 +110,6 @@ UserSchema.pre("save", async function (next) {
 
 
 
-const UserModel = mongoose.models.user3 || mongoose.model("user3", UserSchema);
+const UserModel = mongoose.models.user4 || mongoose.model("user4", UserSchema);
 
 export default UserModel;
