@@ -20,10 +20,16 @@ export default function Dashboard1({ dscode, fromDate, toDate }) {
 
     useEffect(() => {
         if (!dscode) return;
+    
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await axios.get(`/api/dashboard/teamsp/${dscode}`);
+                const params = new URLSearchParams();
+                if (fromDate) params.append("from", fromDate.toISOString());
+                if (toDate) params.append("to", toDate.toISOString());
+    
+                const url = `/api/dashboard/teamsp/${dscode}?${params.toString()}`;
+                const response = await axios.get(url);
                 setData(response.data);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -32,8 +38,11 @@ export default function Dashboard1({ dscode, fromDate, toDate }) {
                 setLoading(false);
             }
         };
+    
         fetchData();
-    }, [dscode]);
+    }, [dscode, fromDate, toDate]);
+    
+    
 
     if (loading) return <SkeletonLoader />;
     if (error) return <p className="text-red-500 text-center font-semibold">{error}</p>;

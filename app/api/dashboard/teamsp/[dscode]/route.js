@@ -25,6 +25,12 @@ export async function GET(request) {
     const url = new URL(request.url);
     const ds = url.pathname.split("/").pop();
 
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+
+    const fromDate = from ? new Date(from) : null;
+    const toDate = to ? new Date(to) : null;
+
     if (!ds) {
       return Response.json({ message: "Invalid request! dscode missing.", success: false }, { status: 400 });
     }
@@ -34,10 +40,14 @@ export async function GET(request) {
       return Response.json({ message: "User not found!", success: false }, { status: 404 });
     }
 
-    // Fetch all users at once
-    const allUsers = await UserModel.find({});
-    const allUsersMap = new Map();
+    // Fetch all users (filtered by createdAt if dates provided)
+    const userFilter = {};
+    if (fromDate && toDate) {
+      userFilter.createdAt = { $gte: fromDate, $lte: toDate };
+    }
+    const allUsers = await UserModel.find(userFilter);
 
+    const allUsersMap = new Map();
     allUsers.forEach(user => {
       if (!allUsersMap.has(user.pdscode)) {
         allUsersMap.set(user.pdscode, []);
@@ -45,9 +55,8 @@ export async function GET(request) {
       allUsersMap.get(user.pdscode).push(user);
     });
 
-    // Build the team tree
     const teamUsers = await buildTeamTree(ds, allUsersMap);
-    teamUsers.unshift(mainUser);
+    teamUsers.unshift(mainUser); // add main user to team
 
     // Same analytics
     const totalSGO = teamUsers.filter(user => user.group === "SGO").length;
