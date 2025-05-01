@@ -147,6 +147,13 @@ export default function Page() {
                                         </tr>
                                         <tr className="bg-gray-100 dark:bg-gray-800">
                                             <td colSpan="10" className="px-4 pb-2 text-right space-x-2">
+                                            
+                                                <Link
+                                                    href={`/superadmin/Report/allreport/${user.dscode}`}
+                                                    className="text-blue-500 font-semibold underline"
+                                                >
+                                                    All Report
+                                                </Link>
                                                 <Link
                                                     href={`/superadmin/Report/UserReportcom/${user.dscode}`}
                                                     className="text-blue-500 font-semibold underline"

@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Dashboard1 from "@/components/Dashboard/Dashboard1";
-import Dashboard2 from "@/components/Dashboard/Dashboard2";
 import Dashboard3 from "@/components/Dashboard/Dashboard3";
 import Dashboard4 from "@/components/Dashboard/Dashboard4";
 import Image from 'next/image';
