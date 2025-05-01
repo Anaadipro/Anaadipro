@@ -67,8 +67,8 @@ export default function Page() {
       </div>
 
       {/* Dashboard Components */}
-      <Dashboard3 dscode={dscode}/>
       <Dashboard1 dscode={dscode} fromDate={filterDates.from} toDate={filterDates.to} />
+      <Dashboard3 dscode={dscode}/>
       <Dashboard4 dscode={dscode} fromDate={filterDates.from} toDate={filterDates.to} />
     </div>
   );

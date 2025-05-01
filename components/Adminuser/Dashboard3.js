@@ -78,53 +78,62 @@ export default function Dashboard3({dscode}) {
     if (error) return <p className="text-red-500 text-center font-semibold">{error}</p>;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4  bg-gray-50 dark:bg-gray-900">
-
-
-            <div className="relative p-5 bg-white dark:bg-gray-800 rounded-lg shadow-lg border overflow-hidden">
-                <div className={`absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] from-purple-500`}></div>
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><Trophy className="text-purple-500" /></div>
-                    <p className="text-gray-700 dark:text-white font-semibold">Trip Commission</p>
-                </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-300 mt-2">0.00</p>
+        <div className="space-y-3">
+          {/* Item 1 */}
+          <div className="relative p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-md bg-gray-100 dark:bg-gray-700">
+                <Trophy className="text-purple-500 w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-700 dark:text-white font-medium">Trip Commission</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-300">0.00</p>
+              </div>
             </div>
-
-
-            <div className="relative p-5 bg-white dark:bg-gray-800 rounded-lg shadow-lg border overflow-hidden">
-                <div className={`absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] from-red-500`}></div>
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><ArrowUpRight className="text-red-500" /></div>
-                    <p className="text-gray-700 dark:text-white font-semibold">Current Level</p>
-                </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-300 mt-2">{data?.level ?? "N/A"}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{data?.level}.</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Level Next Target: {nextLevelTarget}</p>
-
+          </div>
+      
+          {/* Item 2 */}
+          <div className="relative p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-md bg-gray-100 dark:bg-gray-700">
+                <ArrowUpRight className="text-red-500 w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-700 dark:text-white font-medium">Current Level</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-300">{data?.level ?? "N/A"}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Level Next Target: {nextLevelTarget}</p>
+              </div>
             </div>
-
-            <div className="relative p-5 bg-white dark:bg-gray-800 rounded-lg shadow-lg border overflow-hidden">
-                <div className={`absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] from-purple-500`}></div>
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><FileText className="text-gray-500" /></div>
-                    <p className="text-gray-700 dark:text-white font-semibold">Bonanza Status</p>
-                </div>
-                <p className="text-xl font-bold text-red-500 dark:text-gray-300 mt-2">pending</p>
+          </div>
+      
+          {/* Item 3 */}
+          <div className="relative p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-md bg-gray-100 dark:bg-gray-700">
+                <FileText className="text-gray-500 w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-700 dark:text-white font-medium">Bonanza Status</p>
+                <p className="text-sm font-semibold text-red-500 dark:text-gray-300">pending</p>
+              </div>
             </div>
+          </div>
         </div>
-    );
+      );
+      
 }
 
 
 function SkeletonLoader() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-            {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-5 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl h-40"></div>
-            ))}
-        </div>
+      <div className="space-y-3 p-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="p-3 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-md h-20"></div>
+        ))}
+      </div>
     );
-}
+  }
+  
 export function gcd(a, b) {
     return b === 0 ? a : gcd(b, a % b);
 }
