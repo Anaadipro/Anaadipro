@@ -2,8 +2,7 @@ import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
 import OrderModel from "@/model/Order";
 import moment from "moment";
-
-async function buildTeamTree(ds, allUsersMap, visited = new Set()) {
+async function buildSubTree(ds, allUsersMap, visited = new Set()) {
   if (visited.has(ds)) return [];
   visited.add(ds);
 
@@ -11,7 +10,7 @@ async function buildTeamTree(ds, allUsersMap, visited = new Set()) {
   let team = [...directMembers];
 
   for (const member of directMembers) {
-    const subTeam = await buildTeamTree(member.dscode, allUsersMap, visited);
+    const subTeam = await buildSubTree(member.dscode, allUsersMap, visited);
     team.push(...subTeam);
   }
 
@@ -40,13 +39,12 @@ export async function GET(request) {
       return Response.json({ message: "User not found!", success: false }, { status: 404 });
     }
 
-    // Fetch all users (filtered by createdAt if dates provided)
     const userFilter = {};
     if (fromDate && toDate) {
       userFilter.createdAt = { $gte: fromDate, $lte: toDate };
     }
-    const allUsers = await UserModel.find(userFilter);
 
+    const allUsers = await UserModel.find(userFilter);
     const allUsersMap = new Map();
     allUsers.forEach(user => {
       if (!allUsersMap.has(user.pdscode)) {
@@ -55,21 +53,39 @@ export async function GET(request) {
       allUsersMap.get(user.pdscode).push(user);
     });
 
-    const teamUsers = await buildTeamTree(ds, allUsersMap);
-    teamUsers.unshift(mainUser); // add main user to team
+    const directChildren = allUsersMap.get(ds) || [];
 
-    // Same analytics
-    const totalSGO = teamUsers.filter(user => user.group === "SGO").length;
-    const totalSAO = teamUsers.filter(user => user.group === "SAO").length;
-    const totalActiveSGO = teamUsers.filter(user => user.group === "SGO" && user.usertype === "1").length;
-    const totalActiveSAO = teamUsers.filter(user => user.group === "SAO" && user.usertype === "1").length;
-
+    // Counters
+    let totalSGO = 0, totalSAO = 0;
+    let totalActiveSGO = 0, totalActiveSAO = 0;
     let totalEarnSP = 0, totalSaoSP = 0, totalSgoSP = 0;
-    teamUsers.forEach(user => {
-      totalEarnSP += parseFloat(user.earnsp) || 0;
-      totalSaoSP += parseFloat(user.saosp) || 0;
-      totalSgoSP += parseFloat(user.sgosp) || 0;
-    });
+
+    for (const child of directChildren) {
+      const visited = new Set();
+      const subTree = await buildSubTree(child.dscode, allUsersMap, visited);
+
+      const fullGroup = [child, ...subTree]; // Include the direct child
+
+      if (child.group === "SAO") {
+        totalSAO += fullGroup.length;
+        totalActiveSAO += fullGroup.filter(u => u.usertype === "1").length;
+        fullGroup.forEach(u => {
+          totalEarnSP += parseFloat(u.earnsp) || 0;
+          totalSaoSP += parseFloat(u.saosp) || 0;
+          totalSgoSP += parseFloat(u.sgosp) || 0;
+        });
+      }
+
+      if (child.group === "SGO") {
+        totalSGO += fullGroup.length;
+        totalActiveSGO += fullGroup.filter(u => u.usertype === "1").length;
+        fullGroup.forEach(u => {
+          totalEarnSP += parseFloat(u.earnsp) || 0;
+          totalSaoSP += parseFloat(u.saosp) || 0;
+          totalSgoSP += parseFloat(u.sgosp) || 0;
+        });
+      }
+    }
 
     const totalIncome = (parseFloat(mainUser.earnsp) || 0) * 10;
     const startOfWeek = moment().startOf("week").toDate();
