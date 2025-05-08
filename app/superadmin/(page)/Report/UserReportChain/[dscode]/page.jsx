@@ -61,6 +61,7 @@ export default function PendingOrders() {
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">PD Code</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DS Code</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Group</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Created Date</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Activate Date</th>
@@ -73,6 +74,7 @@ export default function PendingOrders() {
                       <td className="px-4 py-2 text-sm">{user.name}</td>
                       <td className="px-4 py-2 text-sm">{user.pdscode}</td>
                       <td className="px-4 py-2 text-sm">{user.dscode}</td>
+                      <td className="px-4 py-2 text-sm">{user.group}</td>
                       <td
                         className={`px-4 py-3 font-semibold ${user.usertype === "1" ? "text-green-600" : "text-red-600"
                           }`}
