@@ -133,7 +133,7 @@ export default function Signin() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
             <Link href="/signup">
-              <p className="text-xs hover:underline hover:text-[#161950] font-semibold text-gray-600 mt-2">Not a user? Sign up</p>
+              <p className="text-xs hover:underline hover:text-[#161950] font-semibold text-gray-600 mt-2">Register Here</p>
             </Link>
           </form>
         </div>

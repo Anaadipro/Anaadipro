@@ -9,7 +9,8 @@ import "react-phone-input-2/lib/style.css";
 export default function Signup() {
     const [loginKey, setLoginKey] = useState(null); // holds dscode and password
     const [showModal, setShowModal] = useState(false);
-    const [step, setStep] = useState(3);
+    const [step, setStep] = useState(2);
+    const [checkboxes, setCheckboxes] = useState(Array(6).fill(false));
     const [formData, setFormData] = useState({
         email: "",
         otp: "",
@@ -24,6 +25,9 @@ export default function Signup() {
         fatherOrHusbandName: "",
         profession: "",
         maritalStatus: "",
+        nomineeName:"",
+        nomineeRelation:"",
+        nomineeDOB:"",
         address: {
             addressLine1: '',
             addressLine2: '',
@@ -81,6 +85,10 @@ export default function Signup() {
             if (!formData.gender) newErrors.gender = "Please select a gender";
             if (!formData.group) newErrors.group = "Please select a Group";
             if (!formData.pdscode) newErrors.pdscode = "Please Enter Referral";
+
+            if (!formData.nomineeName) newErrors.nomineeName = "Please Enter Nominee Name";
+            if (!formData.nomineeRelation) newErrors.nomineeRelation = "Please Select Nominee Relation";
+            if (!formData.nomineeDOB) newErrors.nomineeDOB = "Please Enter Nominee DOB";
 
             if (!formData.dob) newErrors.dob = "Please enter Date of Birth";
             if (!formData.fatherOrHusbandName) newErrors.fatherOrHusbandName = "Please enter Father or Husband's Name";
@@ -149,6 +157,16 @@ export default function Signup() {
         }
     };
 
+
+    const handleCheckboxChange = (index) => {
+        const newCheckboxes = [...checkboxes];
+        newCheckboxes[index] = !newCheckboxes[index];
+        setCheckboxes(newCheckboxes);
+    };
+
+    const allChecked = checkboxes.every((item) => item);
+
+
     return (
         <section className="min-h-screen flex items-center justify-center px-4 bg-gray-100">
             <Toaster />
@@ -204,7 +222,14 @@ export default function Signup() {
 
             <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl">
                 <h2 className="text-2xl font-bold text-center text-[#161950] mb-4">
-                    {step === 1 ? "Verify Email" : step === 2 ? "Enter OTP" : "Create an Account"}
+                    {/* {step === 1 ? "Verify Email" : step === 2 ? "Enter OTP" : "Create an Account"} */}
+                    {step !== 2 && (
+                        <>
+                            {step === 1 ? "Verify Email" : "Create an Account"}
+                        </>
+
+                    )}
+
                 </h2>
                 <form onSubmit={step === 1 ? handleEmailSubmit : step === 2 ? handleOtpVerify : handleSubmit} className="grid lg:grid-cols-2 gap-2">
                     {step === 1 && (
@@ -214,11 +239,55 @@ export default function Signup() {
                             {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
                         </div>
                     )}
-                    {step === 2 && (
+                    {/* {step === 2 && (
                         <div className="lg:col-span-1">
                             <label className="text-gray-700 text-sm font-semibold">Enter OTP</label>
                             <input type="text" name="otp" value={formData.otp} onChange={handleChange} placeholder="Enter OTP" className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
                             {errors.otp && <p className="text-red-500 text-xs">{errors.otp}</p>}
+                        </div>
+                    )} */}
+                    {step === 2 && (
+                        <div className="p-4 col-span-2 mx-auto bg-white rounded shadow">
+                            <h2 className="text-xl font-semibold mb-4">Become a Direct Seller</h2>
+                            <p className="font-bold">I hereby declare that</p>
+                            <div className="space-y-3 mt-2">
+                                <label className="flex items-start space-x-2">
+                                    <input type="checkbox" checked={checkboxes[0]} onChange={() => handleCheckboxChange(0)} />
+                                    <span>I am above 18 years and citizen of India.</span>
+                                </label>
+                                <label className="flex items-start space-x-2">
+                                    <input type="checkbox" checked={checkboxes[1]} onChange={() => handleCheckboxChange(1)} />
+                                    <span>I have not paid any entry/subscription fee for the registration/enrollment as a direct seller.</span>
+                                </label>
+                                <label className="flex items-start space-x-2">
+                                    <input type="checkbox" checked={checkboxes[2]} onChange={() => handleCheckboxChange(2)} />
+                                    <span>I have read and understood the policies of the Company which has been mentioned on the Company website.</span>
+                                </label>
+                                <label className="flex items-start space-x-2">
+                                    <input type="checkbox" checked={checkboxes[3]} onChange={() => handleCheckboxChange(3)} />
+                                    <span>I have been made aware of the Mahaguru Business Plan and the rules of conduct and Code of ethics.</span>
+                                </label>
+                                <label className="flex items-start space-x-2">
+                                    <input type="checkbox" checked={checkboxes[4]} onChange={() => handleCheckboxChange(4)} />
+                                    <span>I am eligible to execute contract as per India Contract Act 1872, and I am not convicted, bankrupted and person of unsound mind.</span>
+                                </label>
+                                <label className="flex items-start space-x-2">
+                                    <input type="checkbox" checked={checkboxes[5]} onChange={() => handleCheckboxChange(5)} />
+                                    <span>I hereby declare that the information stated above is true, complete and correct to the best of my knowledge and I am completely liable for any consequence if arises.</span>
+                                </label>
+                            </div>
+
+                            <button
+                                onClick={() => setStep(3)}
+                                disabled={!allChecked}
+                                className={`mt-4 px-4 py-2 rounded text-white ${allChecked
+                                    ? "bg-blue-500 hover:bg-blue-600"
+                                    : "bg-gray-400 cursor-not-allowed"
+                                    }`}
+                            >
+                                Next Step
+                            </button>
+
                         </div>
                     )}
                     {step === 3 && (
@@ -281,6 +350,34 @@ export default function Signup() {
                                 </select>
                                 {errors.maritalStatus && <p className="text-red-500 text-xs">{errors.maritalStatus}</p>}
                             </div>
+                            {/*  */}
+                            <div className="lg:col-span-1">
+                                <label className="text-gray-700 text-sm font-semibold">Nominee Name</label>
+                                <input type="text" name="nomineeName" value={formData.nomineeName} onChange={handleChange} placeholder="Full Name" className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
+                                {errors.nomineeName && <p className="text-red-500 text-xs">{errors.nomineeName}</p>}
+                            </div>
+
+                            <div className="lg:col-span-1">
+                                <label className="text-gray-700 text-sm font-semibold">Nominee DOB</label>
+                                <input type="date" name="nomineeDOB" value={formData.nomineeDOB} onChange={handleChange} className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
+                                {errors.nomineeDOB && <p className="text-red-500 text-xs">{errors.nomineeDOB}</p>}
+                            </div>
+
+                            <div className="lg:col-span-1">
+                                <label className="text-gray-700 text-sm font-semibold">Nominee Relation</label>
+                                <select name="nomineeRelation" value={formData.nomineeRelation} onChange={handleChange} className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm">
+                                    <option value="" disabled>Select</option>
+                                    <option value="Brother">Brother</option>
+                                    <option value="Father">Father</option>
+                                    <option value="Friend">Friend</option>
+                                    <option value="Mother">Mother</option>
+                                    <option value="Wife">Wife</option>
+                                    <option value="Sister">Sister</option>
+                                </select>
+                                {errors.nomineeRelation && <p className="text-red-500 text-xs">{errors.nomineeRelation}</p>}
+                            </div>
+
+                            {/*  */}
                             {[
                                 { label: 'Address Line 1', name: 'addressLine1' },
                                 { label: 'Address Line 2', name: 'addressLine2' },
@@ -336,9 +433,13 @@ export default function Signup() {
                             </div>
                         </>
                     )}
-                    <button type="submit" disabled={isSubmitting} className="w-full lg:col-span-2 cursor-pointer bg-[#161950]/80 text-white py-2 rounded-lg hover:bg-[#161950] transition disabled:bg-gray-400">
-                        {isSubmitting ? "Processing..." : step === 1 ? "Send OTP" : step === 2 ? "Verify OTP" : "Sign Up"}
-                    </button>
+                    {step !== 2 && (
+                        <button type="submit" disabled={isSubmitting} className="w-full lg:col-span-2 cursor-pointer bg-[#161950]/80 text-white py-2 rounded-lg hover:bg-[#161950] transition disabled:bg-gray-400">
+                            {isSubmitting ? "Processing..." : step === 1 ? "Send OTP" : step === 2 ? "Verify OTP" : "Sign Up"}
+                        </button>
+                    )}
+
+
                     <Link href="/signin">
                         <p className="text-xs hover:underline hover:text-[#161950] font-semibold text-gray-600">Already have an account? Sign in</p>
                     </Link>
