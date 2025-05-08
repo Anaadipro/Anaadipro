@@ -6,6 +6,7 @@ export default function PendingOrders() {
   const { dscode } = useParams();
   const [mainUser, setMainUser] = useState(null);
   const [relatedUsers, setRelatedUsers] = useState([]);
+  const [groupCounts, setGroupCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,6 +23,14 @@ export default function PendingOrders() {
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
           );
           setRelatedUsers(sortedUsers);
+
+          // Count users per group
+          const counts = {};
+          for (const user of data.relatedUsers) {
+            const group = user.group || "Unknown";
+            counts[group] = (counts[group] || 0) + 1;
+          }
+          setGroupCounts(counts);
         } else {
           console.error(data.message);
         }
@@ -49,7 +58,21 @@ export default function PendingOrders() {
             </div>
           )}
 
-          <h2 className="text-xl font-semibold mb-4">Related Users</h2>
+          <h2 className="text-xl font-semibold mb-2">Related Users</h2>
+
+          {/* Group Totals */}
+          <div className="mb-4">
+  <h3 className="text-base font-semibold mb-2 text-gray-800">Group Totals</h3>
+  <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+    {Object.entries(groupCounts).map(([group, count]) => (
+      <div key={group} className="bg-gray-100 px-3 py-1 rounded-md shadow-sm">
+        <strong>{group}:</strong> {count}
+      </div>
+    ))}
+  </div>
+</div>
+
+
           {relatedUsers.length === 0 ? (
             <p className="text-gray-500">No related users found.</p>
           ) : (
@@ -76,8 +99,7 @@ export default function PendingOrders() {
                       <td className="px-4 py-2 text-sm">{user.dscode}</td>
                       <td className="px-4 py-2 text-sm">{user.group}</td>
                       <td
-                        className={`px-4 py-3 font-semibold ${user.usertype === "1" ? "text-green-600" : "text-red-600"
-                          }`}
+                        className={`px-4 py-3 font-semibold ${user.usertype === "1" ? "text-green-600" : "text-red-600"}`}
                       >
                         {user.usertype === "1" ? "Active" : "Inactive"}
                       </td>
@@ -91,13 +113,12 @@ export default function PendingOrders() {
                       <td className="px-4 py-2 text-sm">
                         {user.activedate
                           ? new Date(user.activedate).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
                           : "N/A"}
                       </td>
-
                     </tr>
                   ))}
                 </tbody>
