@@ -2,6 +2,7 @@ import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
 import OrderModel from "@/model/Order";
 import moment from "moment";
+
 async function buildSubTree(ds, allUsersMap, visited = new Set()) {
   if (visited.has(ds)) return [];
   visited.add(ds);
@@ -59,6 +60,23 @@ export async function GET(request) {
     let totalSGO = 0, totalSAO = 0;
     let totalActiveSGO = 0, totalActiveSAO = 0;
     let totalEarnSP = 0, totalSaoSP = 0, totalSgoSP = 0;
+
+    // ✅ Include self user in counters
+    if (mainUser.group === "SAO") {
+      totalSAO += 1;
+      if (mainUser.usertype === "1") totalActiveSAO += 1;
+      totalEarnSP += parseFloat(mainUser.earnsp) || 0;
+      totalSaoSP += parseFloat(mainUser.saosp) || 0;
+      totalSgoSP += parseFloat(mainUser.sgosp) || 0;
+    }
+
+    if (mainUser.group === "SGO") {
+      totalSGO += 1;
+      if (mainUser.usertype === "1") totalActiveSGO += 1;
+      totalEarnSP += parseFloat(mainUser.earnsp) || 0;
+      totalSaoSP += parseFloat(mainUser.saosp) || 0;
+      totalSgoSP += parseFloat(mainUser.sgosp) || 0;
+    }
 
     for (const child of directChildren) {
       const visited = new Set();
