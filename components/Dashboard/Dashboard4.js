@@ -15,12 +15,19 @@ export default function Dashboard4() {
     const [dsid, setDsid] = useState("");
     const [wallet, setWallet] = useState("");
     const [userdata, setUserdata] = useState("");
+    const [saosp, setSaosp] = useState(0);
+    const [sgosp, setSgosp] = useState(0);
     const [data, setData] = useState(null);
     const [rspData, setRspData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
     const [bonanza, setBonanza] = useState("");
+    const [totalGrowth, setTotalGrowth] = useState(0);
+    const [totalCommission, setTotalCommission] = useState(0);
+
+    const [totalPerformance, setTotalPerformance] = useState(0);
+    const [totalIncome, setTotalIncome] = useState(0);
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -46,6 +53,10 @@ export default function Dashboard4() {
                 setDsid(response.data.dscode);
                 setWallet(response.data.WalletDetails);
                 setUserdata(response.data.usertype);
+                setSaosp(parseFloat(response.data.saosp || 0));
+                setSgosp(parseFloat(response.data.sgosp || 0));
+                setTotalGrowth(response.data.totalBonusIncome);
+                setTotalPerformance(response.data.totalPerformanceIncome);
             } catch (error) {
                 console.error("Failed to fetch user data:", error);
             }
@@ -53,6 +64,13 @@ export default function Dashboard4() {
         fetchUserData();
     }, [session?.user?.email]);
 
+    useEffect(() => {
+        if (saosp > 0 && sgosp > 0) {
+            const matchedUnits = Math.min(saosp, sgosp);
+            const commission = matchedUnits * 10;
+            setTotalCommission(commission);
+        }
+    }, [saosp, sgosp]);
     useEffect(() => {
         if (!dsid) return;
 
@@ -79,30 +97,13 @@ export default function Dashboard4() {
 
         fetchData();
     }, [dsid]);
-    const [totalCommission, setTotalCommission] = useState(0);
-    const [totalGrowth, setTotalGrowth] = useState(0);
-    const [totalPerformance, setTotalPerformance] = useState(0);
-    const [totalIncome, setTotalIncome] = useState(0);
-
-    // In useEffect after wallet is set
+  
     useEffect(() => {
-        if (wallet?.length > 0) {
-            let commission = 0;
-            let growth = 0;
-            let performance = 0;
-
-            wallet.forEach(item => {
-                commission += parseFloat(item.salecommission || 0);
-                growth += parseFloat(item.salesgrowth || 0);
-                performance += parseFloat(item.performance || 0);
-            });
-
-            setTotalCommission(commission);
-            setTotalGrowth(growth);
-            setTotalPerformance(performance);
-            setTotalIncome(commission + growth + performance);
-        }
-    }, [wallet]);
+        const income = parseFloat(totalGrowth) + parseFloat(totalPerformance) + parseFloat(totalCommission);
+        setTotalIncome(income);
+    }, [totalGrowth, totalPerformance, totalCommission]);
+    
+ 
 
 
     if (loading) return <SkeletonLoader />;
