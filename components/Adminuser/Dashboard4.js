@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function Dashboard4({dscode,fromDate,toDate}) {
+export default function Dashboard4({ dscode, fromDate, toDate }) {
     const [dsid, setDsid] = useState("");
     const [wallet, setWallet] = useState("");
     const [userdata, setUserdata] = useState("");
@@ -51,8 +51,7 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
                 setDsid(response.data.dscode);
                 setWallet(response.data.WalletDetails);
                 setUserdata(response.data.usertype);
-                setSaosp(parseFloat(response.data.saosp || 0));
-                setSgosp(parseFloat(response.data.sgosp || 0));
+
                 setTotalGrowth(response.data.totalBonusIncome);
                 setTotalPerformance(response.data.totalPerformanceIncome);
             } catch (error) {
@@ -62,13 +61,7 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
         fetchUserData();
     }, [dscode]);
 
-    useEffect(() => {
-        if (saosp > 0 && sgosp > 0) {
-            const matchedUnits = Math.min(saosp, sgosp);
-            const commission = matchedUnits * 10;
-            setTotalCommission(commission);
-        }
-    }, [saosp, sgosp]);
+
     useEffect(() => {
         if (!dsid) return;
 
@@ -85,6 +78,8 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
 
                 setData(teamResponse.data);
                 setRspData(rspResponse.data);
+                setSaosp(parseFloat(teamResponse.data.totalSaoSP || 0));
+                setSgosp(parseFloat(teamResponse.data.totalSgoSP || 0));
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setError("Failed to load data.");
@@ -95,13 +90,19 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
 
         fetchData();
     }, [dsid]);
-  
+    useEffect(() => {
+        if (saosp > 0 && sgosp > 0) {
+            const matchedUnits = Math.min(saosp, sgosp);
+            const commission = matchedUnits * 10;
+            setTotalCommission(commission);
+        }
+    }, [saosp, sgosp]);
     useEffect(() => {
         const income = parseFloat(totalGrowth) + parseFloat(totalPerformance) + parseFloat(totalCommission);
         setTotalIncome(income);
     }, [totalGrowth, totalPerformance, totalCommission]);
-    
- 
+
+
 
     if (loading) return <SkeletonLoader />;
     if (error) return <p className="text-red-500 text-center font-semibold">{error}</p>;

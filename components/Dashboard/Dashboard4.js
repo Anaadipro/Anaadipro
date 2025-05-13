@@ -53,8 +53,7 @@ export default function Dashboard4() {
                 setDsid(response.data.dscode);
                 setWallet(response.data.WalletDetails);
                 setUserdata(response.data.usertype);
-                setSaosp(parseFloat(response.data.saosp || 0));
-                setSgosp(parseFloat(response.data.sgosp || 0));
+
                 setTotalGrowth(response.data.totalBonusIncome);
                 setTotalPerformance(response.data.totalPerformanceIncome);
             } catch (error) {
@@ -87,6 +86,8 @@ export default function Dashboard4() {
 
                 setData(teamResponse.data);
                 setRspData(rspResponse.data);
+                setSaosp(parseFloat(teamResponse.data.totalSaoSP || 0));
+                setSgosp(parseFloat(teamResponse.data.totalSgoSP || 0));
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setError("Failed to load data.");
@@ -97,13 +98,13 @@ export default function Dashboard4() {
 
         fetchData();
     }, [dsid]);
-  
+
     useEffect(() => {
         const income = parseFloat(totalGrowth) + parseFloat(totalPerformance) + parseFloat(totalCommission);
         setTotalIncome(income);
     }, [totalGrowth, totalPerformance, totalCommission]);
-    
- 
+
+
 
 
     if (loading) return <SkeletonLoader />;
