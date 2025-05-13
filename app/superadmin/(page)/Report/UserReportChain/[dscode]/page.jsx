@@ -62,15 +62,15 @@ export default function PendingOrders() {
 
           {/* Group Totals */}
           <div className="mb-4">
-  <h3 className="text-base font-semibold mb-2 text-gray-800">Group Totals</h3>
-  <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-    {Object.entries(groupCounts).map(([group, count]) => (
-      <div key={group} className="bg-gray-100 px-3 py-1 rounded-md shadow-sm">
-        <strong>{group}:</strong> {count}
-      </div>
-    ))}
-  </div>
-</div>
+            <h3 className="text-base font-semibold mb-2 text-gray-800">Group Totals</h3>
+            <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+              {Object.entries(groupCounts).map(([group, count]) => (
+                <div key={group} className="bg-gray-100 px-3 py-1 rounded-md shadow-sm">
+                  <strong>{group}:</strong> {count}
+                </div>
+              ))}
+            </div>
+          </div>
 
 
           {relatedUsers.length === 0 ? (
@@ -84,6 +84,8 @@ export default function PendingOrders() {
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">PD Code</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DS Code</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Sao Sp</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Sgo Sp</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Group</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Created Date</th>
@@ -97,6 +99,8 @@ export default function PendingOrders() {
                       <td className="px-4 py-2 text-sm">{user.name}</td>
                       <td className="px-4 py-2 text-sm">{user.pdscode}</td>
                       <td className="px-4 py-2 text-sm">{user.dscode}</td>
+                      <td className="px-4 py-2 text-sm">{user.saosp}</td>
+                      <td className="px-4 py-2 text-sm">{user.sgosp}</td>
                       <td className="px-4 py-2 text-sm">{user.group}</td>
                       <td
                         className={`px-4 py-3 font-semibold ${user.usertype === "1" ? "text-green-600" : "text-red-600"}`}
@@ -113,10 +117,10 @@ export default function PendingOrders() {
                       <td className="px-4 py-2 text-sm">
                         {user.activedate
                           ? new Date(user.activedate).toLocaleDateString("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
                           : "N/A"}
                       </td>
                     </tr>

@@ -23,27 +23,40 @@ export async function GET(request) {
       );
     }
 
-    // Recursive function to get all children in a chain
-    async function getChainUsers(dscode) {
-      const children = await UserModel.find({ pdscode: dscode });
-      const allDescendants = [];
+    // Get all users in the system once
+    const allUsers = await UserModel.find();
 
-      for (const child of children) {
-        allDescendants.push(child);
-        const subDescendants = await getChainUsers(child.dscode);
-        allDescendants.push(...subDescendants);
-      }
-
-      return allDescendants;
+    // Build a map for quick lookup
+    const userMap = new Map();
+    for (const user of allUsers) {
+      userMap.set(user.dscode, user);
     }
 
-    const relatedUsers = await getChainUsers(ds);
+    // Build a map of parent to children
+    const childrenMap = new Map();
+    for (const user of allUsers) {
+      if (!childrenMap.has(user.pdscode)) {
+        childrenMap.set(user.pdscode, []);
+      }
+      childrenMap.get(user.pdscode).push(user);
+    }
+
+    // Iterative DFS to collect all descendants of mainUser
+    const relatedUsers = [];
+    const stack = [...(childrenMap.get(ds) || [])];
+
+    while (stack.length > 0) {
+      const current = stack.pop();
+      relatedUsers.push(current);
+      const children = childrenMap.get(current.dscode);
+      if (children) stack.push(...children);
+    }
 
     return Response.json(
       {
         success: true,
         mainUser,
-        relatedUsers, // full chain of users
+        relatedUsers, // full chain of users under mainUser
       },
       { status: 200 }
     );

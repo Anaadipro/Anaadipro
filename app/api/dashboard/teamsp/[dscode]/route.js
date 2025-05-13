@@ -81,29 +81,37 @@ export async function GET(request) {
     for (const child of directChildren) {
       const visited = new Set();
       const subTree = await buildSubTree(child.dscode, allUsersMap, visited);
-
       const fullGroup = [child, ...subTree]; // Include the direct child
 
-      if (child.group === "SAO") {
+      const isSAO = child.group === "SAO";
+      const isSGO = child.group === "SGO";
+
+      // Count total members & actives
+      if (isSAO) {
         totalSAO += fullGroup.length;
         totalActiveSAO += fullGroup.filter(u => u.usertype === "1").length;
-        fullGroup.forEach(u => {
-          totalEarnSP += parseFloat(u.earnsp) || 0;
-          totalSaoSP += parseFloat(u.saosp) || 0;
-          totalSgoSP += parseFloat(u.sgosp) || 0;
-        });
-      }
-
-      if (child.group === "SGO") {
+      } else if (isSGO) {
         totalSGO += fullGroup.length;
         totalActiveSGO += fullGroup.filter(u => u.usertype === "1").length;
-        fullGroup.forEach(u => {
-          totalEarnSP += parseFloat(u.earnsp) || 0;
-          totalSaoSP += parseFloat(u.saosp) || 0;
-          totalSgoSP += parseFloat(u.sgosp) || 0;
-        });
       }
+
+      // Accumulate ALL SP (earnsp + saosp + sgosp) into the direct child group bucket
+      fullGroup.forEach(u => {
+        totalEarnSP += parseFloat(u.earnsp) || 0;
+
+        const totalUserSP =
+          (parseFloat(u.saosp) || 0) +
+          (parseFloat(u.sgosp) || 0);
+
+        if (isSAO) {
+          totalSaoSP += totalUserSP;
+        } else if (isSGO) {
+          totalSgoSP += totalUserSP;
+        }
+      });
     }
+
+
 
     const totalIncome = (parseFloat(mainUser.earnsp) || 0) * 10;
     const startOfWeek = moment().startOf("week").toDate();
