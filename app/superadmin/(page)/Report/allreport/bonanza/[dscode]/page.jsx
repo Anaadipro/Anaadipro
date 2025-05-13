@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-
+import axios from "axios";
 export default function Page() {
   const { dscode } = useParams();
 

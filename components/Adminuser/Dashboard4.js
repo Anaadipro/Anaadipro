@@ -13,12 +13,19 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
     const [dsid, setDsid] = useState("");
     const [wallet, setWallet] = useState("");
     const [userdata, setUserdata] = useState("");
+    const [saosp, setSaosp] = useState(0);
+    const [sgosp, setSgosp] = useState(0);
     const [data, setData] = useState(null);
     const [rspData, setRspData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
     const [bonanza, setBonanza] = useState("");
+    const [totalGrowth, setTotalGrowth] = useState(0);
+    const [totalCommission, setTotalCommission] = useState(0);
+
+    const [totalPerformance, setTotalPerformance] = useState(0);
+    const [totalIncome, setTotalIncome] = useState(0);
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -41,8 +48,13 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
             if (!dscode) return;
             try {
                 const response = await axios.get(`/api/user/finduserbyid/${dscode}`);
+                setDsid(response.data.dscode);
                 setWallet(response.data.WalletDetails);
                 setUserdata(response.data.usertype);
+                setSaosp(parseFloat(response.data.saosp || 0));
+                setSgosp(parseFloat(response.data.sgosp || 0));
+                setTotalGrowth(response.data.totalBonusIncome);
+                setTotalPerformance(response.data.totalPerformanceIncome);
             } catch (error) {
                 console.error("Failed to fetch user data:", error);
             }
@@ -51,7 +63,14 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
     }, [dscode]);
 
     useEffect(() => {
-        if (!dscode) return;
+        if (saosp > 0 && sgosp > 0) {
+            const matchedUnits = Math.min(saosp, sgosp);
+            const commission = matchedUnits * 10;
+            setTotalCommission(commission);
+        }
+    }, [saosp, sgosp]);
+    useEffect(() => {
+        if (!dsid) return;
 
         const fetchData = async () => {
             setLoading(true);
@@ -60,8 +79,8 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
             try {
                 // Fetch both APIs simultaneously
                 const [teamResponse, rspResponse] = await Promise.all([
-                    axios.get(`/api/dashboard/teamsp/${dscode}`),
-                    axios.get(`/api/dashboard/rsp/${dscode}`)
+                    axios.get(`/api/dashboard/teamsp/${dsid}`),
+                    axios.get(`/api/dashboard/rsp/${dsid}`)
                 ]);
 
                 setData(teamResponse.data);
@@ -75,32 +94,14 @@ export default function Dashboard4({dscode,fromDate,toDate}) {
         };
 
         fetchData();
-    }, [dscode]);
-    const [totalCommission, setTotalCommission] = useState(0);
-    const [totalGrowth, setTotalGrowth] = useState(0);
-    const [totalPerformance, setTotalPerformance] = useState(0);
-    const [totalIncome, setTotalIncome] = useState(0);
-
-    // In useEffect after wallet is set
+    }, [dsid]);
+  
     useEffect(() => {
-        if (wallet?.length > 0) {
-            let commission = 0;
-            let growth = 0;
-            let performance = 0;
-
-            wallet.forEach(item => {
-                commission += parseFloat(item.salecommission || 0);
-                growth += parseFloat(item.salesgrowth || 0);
-                performance += parseFloat(item.performance || 0);
-            });
-
-            setTotalCommission(commission);
-            setTotalGrowth(growth);
-            setTotalPerformance(performance);
-            setTotalIncome(commission + growth + performance);
-        }
-    }, [wallet]);
-
+        const income = parseFloat(totalGrowth) + parseFloat(totalPerformance) + parseFloat(totalCommission);
+        setTotalIncome(income);
+    }, [totalGrowth, totalPerformance, totalCommission]);
+    
+ 
 
     if (loading) return <SkeletonLoader />;
     if (error) return <p className="text-red-500 text-center font-semibold">{error}</p>;
