@@ -55,6 +55,65 @@ export default function UserProfile() {
       setLoading(false);
     }
   };
+  const handleFreeze = async () => {
+    if (!decodedId || !userData) return;
+
+    const isFrozen = userData.defaultdata === "freeze";
+
+    const confirmAction = confirm(
+      isFrozen ? "Unfreeze this account?" : "Freeze this account?"
+    );
+    if (!confirmAction) return;
+
+    setLoading(true);
+    try {
+      const updateData = {
+        id: userData._id, // ✅ include ID in the body
+        defaultdata: isFrozen ? "user" : "freeze",
+      };
+
+      await axios.patch("/api/user/update", updateData); // ✅ no id in URL
+      setSuccess(`Account ${isFrozen ? "unfrozen" : "frozen"} successfully.`);
+      window.location.reload();
+
+    } catch (error) {
+      console.error("Freeze error:", error);
+      setError("Failed to update freeze status.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!decodedId || !userData) return;
+
+    const isBlocked = userData.defaultdata === "block";
+
+    const confirmAction = confirm(
+      isBlocked ? "Unblock this account?" : "Block this account?"
+    );
+    if (!confirmAction) return;
+
+    setLoading(true);
+    try {
+      const updateData = {
+        id: userData._id, // ✅ include ID here as well
+        defaultdata: isBlocked ? "user" : "block",
+      };
+
+      await axios.patch("/api/user/update", updateData);
+      setSuccess(`Account ${isBlocked ? "unblocked" : "blocked"} successfully.`);
+      window.location.reload();
+    } catch (error) {
+      console.error("Block error:", error);
+      setError("Failed to update block status.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
 
   if (loading) {
     return (
@@ -244,9 +303,38 @@ export default function UserProfile() {
       <div className="  mt-5 flex  justify-end">
 
         {decodedId && (
-          <button type="button" onClick={handleDelete} disabled={loading} className=" bg-red-500 text-sm px-2 py-1 rounded text-white">
-            Delete
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleFreeze}
+              disabled={loading}
+              className={`${userData?.defaultdata === "freeze" ? "bg-green-600" : "bg-yellow-500"
+                } hover:opacity-90 text-sm px-4 py-2 rounded text-white transition duration-200 disabled:opacity-50`}
+            >
+              {userData?.defaultdata === "freeze" ? "Unfreeze Account" : "Freeze Account"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBlock}
+              disabled={loading}
+              className={`${userData?.defaultdata === "block" ? "bg-green-600" : "bg-orange-600"
+                } hover:opacity-90 text-sm px-4 py-2 rounded text-white transition duration-200 disabled:opacity-50`}
+            >
+              {userData?.defaultdata === "block" ? "Unblock Account" : "Block Account"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700 text-sm px-4 py-2 rounded text-white transition duration-200 disabled:opacity-50"
+            >
+              Delete Account
+            </button>
+          </div>
+
+
         )}
       </div>
     </div>

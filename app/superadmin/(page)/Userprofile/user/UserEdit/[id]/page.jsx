@@ -8,8 +8,10 @@ import toast, { Toaster } from "react-hot-toast";
 export default function Page() {
   const { id } = useParams();
   const email = decodeURIComponent(id);
-
+  const [saosp, setSaosp] = useState(0);
+  const [sgosp, setSgosp] = useState(0);
   const [userData, setUserData] = useState(null);
+  const [userDs, setUserDs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     kycVerified: false,
@@ -33,6 +35,7 @@ export default function Page() {
       setLoading(true);
       const res = await axios.get(`/api/user/find-admin-byemail/${email}`);
       setUserData(res.data);
+      setUserDs(res.data.dscode);
       setFormData((prev) => ({
         ...prev,
         kycVerified: res.data?.kycVerification?.isVerified || false,
@@ -57,6 +60,33 @@ export default function Page() {
       .then((res) => setLevels(res.data.data || []))
       .catch(() => setError("Failed to fetch levels."));
   }, []);
+
+  useEffect(() => {
+    if (!userDs) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Fetch both APIs simultaneously
+        const [teamResponse] = await Promise.all([
+          axios.get(`/api/dashboard/teamsp/${userDs}`),
+        ]);
+
+        setSaosp(parseFloat(teamResponse.data.totalSaoSP || 0));
+        setSgosp(parseFloat(teamResponse.data.totalSgoSP || 0));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to load data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userDs]);
+
 
   // Handle Level Change
   const handleLevelChange = (value) => {
@@ -185,8 +215,8 @@ export default function Page() {
 
   const filteredLevels = levels.filter(
     (lvl) =>
-      parseInt(lvl.sao) <= parseInt(userData?.saosp || 0) &&
-      parseInt(lvl.sgo) <= parseInt(userData?.sgosp || 0)
+      parseInt(lvl.sao) <= parseInt(saosp || 0) &&
+      parseInt(lvl.sgo) <= parseInt(sgosp || 0)
   );
 
   return (
@@ -208,10 +238,10 @@ export default function Page() {
         </p>
 
         <p>
-          SAO Score: <span className="text-green-600 font-semibold">{userData?.saosp || 0}</span>
+          SAO Score: <span className="text-green-600 font-semibold">{saosp || 0}</span>
         </p>
         <p>
-          SGO Score: <span className="text-purple-600 font-semibold">{userData?.sgosp || 0}</span>
+          SGO Score: <span className="text-purple-600 font-semibold">{sgosp || 0}</span>
         </p>
       </div>
 
