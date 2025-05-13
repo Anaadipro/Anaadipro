@@ -18,8 +18,12 @@ export default function Page() {
     sgo: "",
     usertype: "",
     status: "",
-    spType: "", // New: SAO or SGO
-    spAmount: "", // New: Amount to add
+    spAddType: "",     // SAO or SGO (for addition)
+    spAddAmount: "",   // Add amount
+
+    spRemoveType: "",  // SAO or SGO (for subtraction)
+    spRemoveAmount: "" // Remove amount
+
   });
   const [levels, setLevels] = useState([]);
   const [error, setError] = useState(null);
@@ -122,17 +126,37 @@ export default function Page() {
       }
 
       // Update saosp or sgosp if spType and spAmount are provided
-      if (formData.spType && formData.spAmount) {
-        const currentSp = parseFloat(formData.spType === "SAO" ? userData.saosp || 0 : userData.sgosp || 0);
-        const additionalSp = parseFloat(formData.spAmount);
-        if (isNaN(additionalSp) || additionalSp < 0) {
-          toast.error("SP amount must be a valid positive number.");
+      // Process Add SP
+      if (formData.spAddType && formData.spAddAmount) {
+        const currentSp = parseFloat(formData.spAddType === "SAO" ? userData.saosp || 0 : userData.sgosp || 0);
+        const addAmount = parseFloat(formData.spAddAmount);
+        if (isNaN(addAmount) || addAmount < 0) {
+          toast.error("Add SP amount must be a valid positive number.");
           setLoading(false);
           return;
         }
-        const newSp = (currentSp + additionalSp).toString(); // Convert to string per schema
-        updateData[formData.spType === "SAO" ? "saosp" : "sgosp"] = newSp;
+        const newSp = (currentSp + addAmount).toString();
+        updateData[formData.spAddType === "SAO" ? "saosp" : "sgosp"] = newSp;
       }
+
+      // Process Remove SP
+      if (formData.spRemoveType && formData.spRemoveAmount) {
+        const currentSp = parseFloat(formData.spRemoveType === "SAO" ? userData.saosp || 0 : userData.sgosp || 0);
+        const removeAmount = parseFloat(formData.spRemoveAmount);
+        if (isNaN(removeAmount) || removeAmount < 0) {
+          toast.error("Remove SP amount must be a valid positive number.");
+          setLoading(false);
+          return;
+        }
+        if (currentSp - removeAmount < 0) {
+          toast.error("Cannot remove more SP than currently available.");
+          setLoading(false);
+          return;
+        }
+        const newSp = (currentSp - removeAmount).toString();
+        updateData[formData.spRemoveType === "SAO" ? "saosp" : "sgosp"] = newSp;
+      }
+
 
       const res = await axios.patch("/api/user/update/", updateData);
 
@@ -143,9 +167,12 @@ export default function Page() {
         levelName: "",
         sao: "",
         sgo: "",
-        spType: "",
-        spAmount: "",
-      })); // Reset form fields
+        spAddType: "",
+        spAddAmount: "",
+        spRemoveType: "",
+        spRemoveAmount: ""
+      }));
+
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to update user.");
     } finally {
@@ -253,14 +280,14 @@ export default function Page() {
           </select>
         </div>
 
-        {/* SAO/SGO SP Input */}
+        {/* Add SP */}
         <div>
           <label className="block mb-1 font-medium">Add SP (Optional)</label>
           <div className="flex gap-4">
             <select
               className="w-1/2 p-2 border rounded"
-              value={formData.spType}
-              onChange={(e) => setFormData({ ...formData, spType: e.target.value })}
+              value={formData.spAddType}
+              onChange={(e) => setFormData({ ...formData, spAddType: e.target.value })}
             >
               <option value="">Select Type</option>
               <option value="SAO">SAO</option>
@@ -269,13 +296,39 @@ export default function Page() {
             <input
               type="number"
               className="w-1/2 p-2 border rounded"
-              value={formData.spAmount}
-              onChange={(e) => setFormData({ ...formData, spAmount: e.target.value })}
+              value={formData.spAddAmount}
+              onChange={(e) => setFormData({ ...formData, spAddAmount: e.target.value })}
               placeholder="Enter SP amount"
               min="0"
             />
           </div>
         </div>
+
+        {/* Remove SP */}
+        <div>
+          <label className="block mb-1 font-medium">Remove SP (Optional)</label>
+          <div className="flex gap-4">
+            <select
+              className="w-1/2 p-2 border rounded"
+              value={formData.spRemoveType}
+              onChange={(e) => setFormData({ ...formData, spRemoveType: e.target.value })}
+            >
+              <option value="">Select Type</option>
+              <option value="SAO">SAO</option>
+              <option value="SGO">SGO</option>
+            </select>
+            <input
+              type="number"
+              className="w-1/2 p-2 border rounded"
+              value={formData.spRemoveAmount}
+              onChange={(e) => setFormData({ ...formData, spRemoveAmount: e.target.value })}
+              placeholder="Enter SP amount"
+              min="0"
+            />
+          </div>
+        </div>
+
+
 
         {/* Submit Button */}
         <button
