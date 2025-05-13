@@ -11,7 +11,7 @@ export const GET = async (request) => {
     const date = searchParams.get("date");
 
     const filter = {
-        defaultdata: "user",
+        defaultdata: { $in: ["freeze", "user", "block"] },
         usertype: { $ne: 2 },
     };
 

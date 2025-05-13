@@ -5,7 +5,7 @@ import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Mail, Lock,LockKeyholeIcon,KeyIcon } from "lucide-react";
+import { Mail, Lock, LockKeyholeIcon, KeyIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 export default function Signin() {
@@ -13,6 +13,7 @@ export default function Signin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [email, setEmail] = useState("")
+  const [user, setUser] = useState("")
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prevState) => ({ ...prevState, [id]: value }));
@@ -25,7 +26,8 @@ export default function Signin() {
   const fetchUserData = async (dsid) => {
     try {
       const response = await axios.get(`/api/user/finduserbyid/${dsid}`);
-      setEmail(response.data.email)
+      setEmail(response.data.email);
+      setUser(response.data.defaultdata);
       return response.data;
     } catch (error) {
       toast.error("Failed to fetch user data. Please try again.");
@@ -36,41 +38,52 @@ export default function Signin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!isFormValid()) {
       toast.error("Please fill in all fields.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const userData = await fetchUserData(formData.dsid);
       if (!userData) return;
-  
+      if (userData.defaultdata !== "user") {
+        toast.error(
+          <span>
+            Your account is{" "}
+            <strong style={{ color: "red", textTransform: "uppercase" }}>
+              {userData.defaultdata}
+            </strong>
+            , please contact admin.
+          </span>
+        );
+        return;
+      }
       // Directly use userData.email instead of waiting on setEmail
       const res = await signIn("credentials", {
         email: userData.email,
         password: formData.password,
         redirect: false,
       });
-  
+
       if (res.error) {
         toast.error("Invalid Credentials");
         return;
       }
-  
+
       toast.success("Successfully signed in!");
       const userRoutes = { "2": "/superadmin", "1": "/admin", "0": "/user" };
       router.push(userRoutes[userData.usertype] || "/");
-  
+
     } catch (error) {
       handleSignInError(error);
     } finally {
       setLoading(false);
     }
   };
-  
+
 
   const handleSignInError = (error) => {
     if (axios.isAxiosError(error) && error.response) {
@@ -89,7 +102,7 @@ export default function Signin() {
         <div className="w-full order-2 md:order-1  md:w-1/2 p-8">
           <h2 className="text-center text-3xl font-semibold text-gray-700">Sign In</h2>
           <form onSubmit={handleSubmit} className="mt-6">
-            
+
             <div className="relative mb-4">
 
               <Input

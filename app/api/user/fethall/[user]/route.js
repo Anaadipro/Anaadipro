@@ -4,7 +4,11 @@ export const GET = async (request) => {
     await dbConnect();
 
     try {
-        const data = await UserModel.find({ defaultdata: "user",usertype: { $ne: 2 } });
+        const data = await UserModel.find({
+            defaultdata: { $in: ["freeze", "user", "block"] },
+            usertype: { $ne: 2 },
+        });
+
 
         return Response.json(
             {

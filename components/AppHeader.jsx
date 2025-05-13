@@ -15,6 +15,7 @@ const AppHeader = () => {
     const inputRef = useRef(null);
     const { data: session, update } = useSession();
     const [img, setImg] = useState("");
+    const [userstatus, setUserstatus] = useState("");
     const [fetching, setFetching] = useState(false);
     const handleToggle = () => {
         if (window.innerWidth >= 991) {
@@ -27,22 +28,46 @@ const AppHeader = () => {
     const toggleApplicationMenu = () => {
         setApplicationMenuOpen(!isApplicationMenuOpen);
     };
-    useEffect(() => {
-        const fetchUserData = async () => {
-            if (!session?.user?.email) return;
-            try {
-                const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
-                if (response.data?.name) {
-                    setImg(response.data.image);
+   useEffect(() => {
+    const fetchUserData = async () => {
+        if (!session?.user?.email) {
+            console.log("Session email not found");
+            return;
+        }
+
+        try {
+            const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
+
+            const userData = response.data;
+
+            // Log the fetched user data for debugging
+            console.log("Fetched user data:", userData);
+
+            if (userData?.name) {
+                setImg(userData.image);
+                setUserstatus(userData.defaultdata);
+
+                // Check if the defaultdata is not "user" and log out if so
+                if (userData.defaultdata !== "user") {
+                    console.log("Logging out because userstatus is:", userData.defaultdata);
+                    await signOut({ callbackUrl: "/" });
+                } else {
+                    console.log("User is logged in with defaultdata: user");
                 }
-            } catch (error) {
-                console.error("Failed to fetch user name:", error);
-            } finally {
-                setFetching(false);
+            } else {
+                console.log("User data is missing the name field");
             }
-        };
-        fetchUserData();
-    }, [session?.user?.email]);
+        } catch (error) {
+            console.error("Failed to fetch user data:", error);
+        } finally {
+            setFetching(false);
+        }
+    };
+
+    fetchUserData();
+}, [session?.user?.email]);
+
+
 
 
     useEffect(() => {

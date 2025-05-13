@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import Checkout from "@/components/Checkout/Checkout";
 import { InputField, SelectField } from "@/components/forminput/Input";
 import toast, { Toaster } from "react-hot-toast";
+import { signOut } from 'next-auth/react';
+
 import { useRouter } from "next/navigation";
 export default function Page() {
     const router = useRouter();
@@ -45,6 +47,12 @@ export default function Page() {
                 if (response.data?.dscode) {
                     setDsid(response.data?.dscode);
                     setUserdata(response.data);
+                    if (response.data.defaultdata !== "user") {
+                        console.log("Logging out because userstatus is:", response.data.defaultdata);
+                        await signOut({ callbackUrl: "/" });
+                    } else {
+                        console.log("User is logged in with defaultdata: user");
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch user data:", error);
@@ -147,6 +155,14 @@ export default function Page() {
                 setSubmitting(false);
                 return;
             }
+        }
+        if (userdata?.defaultdata?.toLowerCase() !== "user") {
+            toast.error(`Your account is ${userdata.defaultdata.toUpperCase()}, logging out...`);
+            console.warn("Logging out because userstatus is:", userdata.defaultdata);
+            setTimeout(async () => {
+                await signOut({ callbackUrl: "/" });
+            }, 1500);
+            return;
         }
 
         if (formData.paymentmod === "Online" && !formData.transactionId) {
