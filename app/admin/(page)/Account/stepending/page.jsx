@@ -38,33 +38,54 @@ export default function Page() {
           </tr>
         </thead>
         <tbody>
-          {steppending.map((data, index) => {
-            const totalSAO = parseFloat(data.sao);
-            const totalSGO = parseFloat(data.sgo);
-            const userSAO = parseFloat(userdata.saosp || "0");
-            const userSGO = parseFloat(userdata.sgosp || "0");
+          {(() => {
+            let saoLeft = parseFloat(userdata.saosp || "0");
+            let sgoLeft = parseFloat(userdata.sgosp || "0");
 
-            const remainSAO = Math.max(totalSAO - userSAO, 0).toFixed(2);
-            const remainSGO = Math.max(totalSGO - userSGO, 0).toFixed(2);
+            return steppending.map((data, index) => {
+              const totalSAO = parseFloat(data.sao);
+              const totalSGO = parseFloat(data.sgo);
 
-            const isComplete = remainSAO === "0.00" && remainSGO === "0.00";
+              // Don't change what's shown in user SAO/SGO
+              const userSAO = parseFloat(userdata.saosp || "0");
+              const userSGO = parseFloat(userdata.sgosp || "0");
 
-            return (
-              <tr key={index}>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{index + 1}</td>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{totalSAO.toFixed(2)}</td>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{totalSGO.toFixed(2)}</td>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{userSAO.toFixed(2)}</td>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{userSGO.toFixed(2)}</td>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{remainSAO}</td>
-                <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{remainSGO}</td>
-                <td className={`border border-gray-300 px-3 text-center py-2 font-medium ${isComplete ? "text-green-600" : "text-red-600"}`}>
-                  {isComplete ? "Complete" : "Pending"}
-                </td>
-              </tr>
-            );
-          })}
+              // Calculate how much is left to complete this level
+              const usedSAO = Math.min(saoLeft, totalSAO);
+              const usedSGO = Math.min(sgoLeft, totalSGO);
+
+              const remainSAO = (totalSAO - usedSAO).toFixed(2);
+              const remainSGO = (totalSGO - usedSGO).toFixed(2);
+
+              const isComplete = remainSAO === "0.00" && remainSGO === "0.00";
+
+              // Deduct only for next iteration
+              saoLeft -= usedSAO;
+              sgoLeft -= usedSGO;
+
+              return (
+                <tr key={index}>
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{index + 1}</td>
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{totalSAO.toFixed(2)}</td>
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{totalSGO.toFixed(2)}</td>
+
+                  {/* ✅ Keep showing original user values */}
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{userSAO.toFixed(2)}</td>
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{userSGO.toFixed(2)}</td>
+
+                  {/* ✅ Show dynamic step-by-step remaining */}
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{remainSAO}</td>
+                  <td className="border text-gray-600 text-center border-gray-300 px-3 py-2">{remainSGO}</td>
+
+                  <td className={`border border-gray-300 px-3 text-center py-2 font-medium ${isComplete ? "text-green-600" : "text-red-600"}`}>
+                    {isComplete ? "Complete" : "Pending"}
+                  </td>
+                </tr>
+              );
+            });
+          })()}
         </tbody>
+
       </table>
     </div>
   );

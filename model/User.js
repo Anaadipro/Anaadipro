@@ -29,15 +29,19 @@ const UserSchema = new Schema(
     mobileNo: { type: String, required: true },
     whatsappNo: { type: String },
     email: { type: String, required: true },
+
     bankName: { type: String },
     acnumber: { type: String },
     ifscCode: { type: String },
     bankimage: { type: String },
+
     panno: { type: String },
     panimage: { type: String },
+
     aadharno: { type: String },
     aadharimage: { type: String },
     aadharfullname: { type: String },
+    
     addressproof: { type: String },
     addressproofno: { type: String },
     addressproofimage: { type: String },
