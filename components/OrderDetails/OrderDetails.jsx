@@ -275,58 +275,52 @@ export default function OrderDetails({ data }) {
 
                 {/* Product Table */}
                 <div className="mt-5 border-t border-b border-dashed border-gray-500 py-2 my-2 overflow-x-auto">
-                    <table className="min-w-full table-auto border border-gray-400 text-sm md:text-base">
-                        <thead className="bg-gray-100">
-                            <tr className="text-left">
-                                <th className="border px-2 py-1">Sr.</th>
-                                <th className="border px-2 py-1">Product Name</th>
-                                <th className="border px-2 py-1">HSN Code</th>
-                                <th className="border px-2 py-1">Qty</th>
-                                <th className="border px-2 py-1">Rate</th>
-                                <th className="border px-2 py-1">Amount</th>
-                                <th className="border px-2 py-1">Taxable Value</th>
-                                <th className="border px-2 py-1">CGST</th>
-                                <th className="border px-2 py-1">SGST</th>
-                                <th className="border px-2 py-1">IGST</th>
-                                <th className="border px-2 py-1">Total SP</th>
-                                <th className="border px-2 py-1">Total</th>
+                    <table className="w-full border border-black border-collapse mb-2">
+                        <thead>
+                            <tr>
+                                <th className="border p-1">#</th>
+                                <th className="border p-1">Product</th>
+                                <th className="border p-1">HSN</th>
+                                <th className="border p-1">Qty</th>
+                                <th className="border p-1">Rate</th>
+                                <th className="border p-1">Amount</th>
+                                <th className="border p-1">Taxable</th>
+                                <th className="border p-1">CGST</th>
+                                <th className="border p-1">SGST</th>
+                                <th className="border p-1">IGST</th>
+                                <th className="border p-1">Total SP</th>
+                                <th className="border p-1">Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.productDetails.map((product, index) => {
-                                const matchedProduct = getProductDetails(product.product);
+                                const matched = getProductDetails(product.product);
                                 return (
-                                    <tr key={index} className="bg-white">
-                                        <td className="border px-2 py-1">{index + 1}</td>
-                                        <td className="border px-2 py-1">{product.product}</td>
-                                        <td className="border px-2 py-1">{matchedProduct?.hsn || "-"}</td>
-                                        <td className="border px-2 py-1">{product.quantity}</td>
-                                        <td className="border px-2 py-1">{matchedProduct?.dp || "-"}</td>
-                                        <td className="border px-2 py-1"> {matchedProduct?.dp
-                                            ? (matchedProduct.dp * product.quantity).toFixed(2)
-                                            : "-"}</td>
-                                        <td className="border px-2 py-1"> {matchedProduct?.taxvalue || "-"}</td>
-                                        <td className="border px-2 py-1">{matchedProduct?.cgst || "-"}</td>
-                                        <td className="border px-2 py-1"> {matchedProduct?.sgst || "-"}</td>
-                                        <td className="border px-2 py-1">{matchedProduct?.igst || "-"}</td>
-                                        <td className="border px-2 py-1"> {matchedProduct?.sp
-                                            ? (matchedProduct.sp * product.quantity).toFixed(2)
-                                            : "-"}</td>
-                                        <td className="border px-2 py-1"> {matchedProduct?.dp
-                                            ? (matchedProduct.dp * product.quantity).toFixed(2)
-                                            : "-"}</td>
+                                    <tr key={index}>
+                                        <td className="border p-1 text-center">{index + 1}</td>
+                                        <td className="border p-1">{product.product}</td>
+                                        <td className="border p-1">{matched?.hsn || "-"}</td>
+                                        <td className="border p-1">{product.quantity}</td>
+                                        <td className="border p-1">{matched?.dp || "-"}</td>
+                                        <td className="border p-1">{matched?.dp ? (matched.dp * product.quantity).toFixed(2) : "-"}</td>
+                                        <td className="border p-1">{matched?.taxvalue || "-"}</td>
+                                        <td className="border p-1">{matched?.cgst || "-"}</td>
+                                        <td className="border p-1">{matched?.sgst || "-"}</td>
+                                        <td className="border p-1">{matched?.igst || "-"}</td>
+                                        <td className="border p-1">{matched?.sp ? (matched.sp * product.quantity).toFixed(2) : "-"}</td>
+                                        <td className="border p-1">{matched?.dp ? (matched.dp * product.quantity).toFixed(2) : "-"}</td>
                                     </tr>
                                 );
                             })}
-                            <tr className="font-semibold bg-gray-50">
-                                <td className="border border-gray-400 px-2 py-1 text-center" colSpan={5}>Total</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totalDP.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totaltax.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totalCGST.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totalSGST.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totalIGST.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totalSP.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">{totals.totalDP.toFixed(2)}</td>
+                            <tr className="font-bold">
+                                <td colSpan={5} className="border p-1 text-center">Total</td>
+                                <td className="border p-1">{totals.totalDP.toFixed(2)}</td>
+                                <td className="border p-1">{totals.totaltax.toFixed(2)}</td>
+                                <td className="border p-1">{totals.totalCGST.toFixed(2)}</td>
+                                <td className="border p-1">{totals.totalSGST.toFixed(2)}</td>
+                                <td className="border p-1">{totals.totalIGST.toFixed(2)}</td>
+                                <td className="border p-1">{totals.totalSP.toFixed(2)}</td>
+                                <td className="border p-1">{totals.totalDP.toFixed(2)}</td>
                             </tr>
                         </tbody>
                     </table>
