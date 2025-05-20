@@ -3,8 +3,124 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { toWords } from 'number-to-words';
+import { useReactToPrint } from "react-to-print";
+import { useRef } from "react";
 
 export default function OrderDetails({ data }) {
+    const contentRef = useRef(null);
+    const reactToPrintFn = useReactToPrint({ contentRef });
+    const [orderStatus, setOrderStatus] = useState(data.status);
+    const [isLoading, setIsLoading] = useState(false);
+    const [deliveryStatus, setDeliveryStatus] = useState(data.deliver);
+    const [newDeliveryDate, setNewDeliveryDate] = useState(
+        data.deliverdate ? new Date(data.deliverdate) : null
+    );
+
+    const o = data._id
+    const handleStatusUpdate = async (newStatus) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/order/update/${o}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: data._id,
+                    status: newStatus,
+                }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                setOrderStatus(newStatus);
+                await fetch("/api/PaymentHistory/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        dsid: data.dscode,
+                        amount: "0",
+                        sp: data.totalsp,
+                        group: data.salegroup,
+                        orderno: data.orderNo,
+                        type: "order",
+                    }),
+                });
+                alert(`Order ${newStatus ? 'approved' : 'unapproved'} successfully!`);
+
+                // window.location.reload();
+            } else {
+                throw new Error(result.message || 'Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            alert('Failed to update order status. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    const handleDeliveryUpdate = async (newStatus) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/order/deliveryupdate/${data._id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ deliver: newStatus }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                setDeliveryStatus(newStatus);
+                alert(`Order marked as ${newStatus ? 'Delivered' : 'Not Delivered'} successfully!`);
+            } else {
+                throw new Error(result.message || 'Failed to update delivery status');
+            }
+        } catch (error) {
+            console.error('Error updating delivery status:', error);
+            alert('Failed to update delivery status. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeliveryDateUpdate = async () => {
+        if (!newDeliveryDate) {
+            return alert('Please select a valid date.');
+        }
+
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/order/update/${data._id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ deliverdate: new Date(newDeliveryDate) }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Delivery date updated successfully!');
+            } else {
+                throw new Error(result.message || 'Failed to update delivery date');
+            }
+        } catch (error) {
+            console.error('Error updating delivery date:', error);
+            alert('Failed to update delivery date. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+
+
+
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -12,8 +128,17 @@ export default function OrderDetails({ data }) {
         totalDP: 0,
         totalSP: 0,
         totalQty: 0,
+        totaltax: 0,
+        totalCGST: 0,
+        totalSGST: 0,
+        totalIGST: 0,
     };
 
+    const extractMainValue = (value) => {
+        if (!value) return 0;
+        const main = value.toString().split("(")[0]; // remove anything in ()
+        return Number(main) || 0;
+    };
     useEffect(() => {
         const fetchProducts = async () => {
             setLoading(true);
@@ -35,22 +160,40 @@ export default function OrderDetails({ data }) {
     const getProductDetails = (productName) => {
         return products.find((p) => p.productname === productName);
     };
-    data.productDetails.forEach(product => {
+    data.productDetails.forEach((product) => {
         const matchedProduct = getProductDetails(product.product);
-        const quantity = product.quantity;
+        const quantity = Number(product.quantity) || 0;
 
-        if (matchedProduct?.dp) {
-            totals.totalDP += matchedProduct.dp * quantity;
-        }
-        if (matchedProduct?.sp) {
-            totals.totalSP += matchedProduct.sp * quantity;
-        }
+        if (!matchedProduct) return;
 
+        const dp = Number(matchedProduct.dp) || 0;
+        const sp = Number(matchedProduct.sp) || 0;
+        const taxAmount = Number(matchedProduct.taxvalue) || 0;
+
+        totals.totalDP += dp * quantity;
+        totals.totalSP += sp * quantity;
         totals.totalQty += quantity;
+        totals.totaltax += taxAmount;
+
+        totals.totalCGST += extractMainValue(matchedProduct.cgst);
+        totals.totalSGST += extractMainValue(matchedProduct.sgst);
+        totals.totalIGST += extractMainValue(matchedProduct.igst);
     });
+
+    const totalDPWords = toWords(Math.round(totals.totalDP));
+
     return (
         <>
-            <div className="mx-auto m-8 p-4 border border-gray-400 rounded shadow text-sm bg-white">
+
+
+            <button
+                onClick={() => reactToPrintFn()}
+                className="mt-4 ml-4 bg-green-500 text-white px-4 py-2 rounded shadow-md hover:bg-green-600"
+            >
+                Print Page
+            </button>
+
+            <div ref={contentRef} className="mx-auto m-8 p-4 border border-gray-400 rounded shadow text-sm bg-white">
                 {/* Header */}
                 <div className="text-center mb-2">
                     <h1 className="font-bold text-lg">ANAADIPRO WELLNESS PRIVATE LIMITED</h1>
@@ -112,13 +255,20 @@ export default function OrderDetails({ data }) {
                             <span className="font-semibold">Address: </span>{data.address}
                         </div>
                         <div className="border border-gray-800 p-2">
-                            <span className="font-semibold">Address: </span>{data.address}
+                            <span className="font-semibold">Address: </span>{data.shippingAddress},{data.shippinpPincode}
                         </div>
                         <div className="border border-gray-800 p-2">
                             <span className="font-semibold">Mobile No: </span>{data.mobileno}
                         </div>
                         <div className="border border-gray-800 p-2">
-                            <span className="font-semibold">Mobile No: </span>{data.mobileno}
+                            <span className="font-semibold">Pincode: </span>{data.shippinpPincode}
+
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Mobile No: </span>{data.shippingmobile}
+
                         </div>
                     </div>
                 </div>
@@ -149,32 +299,32 @@ export default function OrderDetails({ data }) {
                                     <tr key={index} className="bg-white">
                                         <td className="border px-2 py-1">{index + 1}</td>
                                         <td className="border px-2 py-1">{product.product}</td>
-                                        <td className="border px-2 py-1">{matchedProduct?.hsn || "N/A"}</td>
+                                        <td className="border px-2 py-1">{matchedProduct?.hsn || "-"}</td>
                                         <td className="border px-2 py-1">{product.quantity}</td>
-                                        <td className="border px-2 py-1">{matchedProduct?.dp || "N/A"}</td>
+                                        <td className="border px-2 py-1">{matchedProduct?.dp || "-"}</td>
                                         <td className="border px-2 py-1"> {matchedProduct?.dp
                                             ? (matchedProduct.dp * product.quantity).toFixed(2)
-                                            : "N/A"}</td>
-                                        <td className="border px-2 py-1">-</td>
-                                        <td className="border px-2 py-1">-</td>
-                                        <td className="border px-2 py-1">-</td>
-                                        <td className="border px-2 py-1">-</td>
+                                            : "-"}</td>
+                                        <td className="border px-2 py-1"> {matchedProduct?.taxvalue || "-"}</td>
+                                        <td className="border px-2 py-1">{matchedProduct?.cgst || "-"}</td>
+                                        <td className="border px-2 py-1"> {matchedProduct?.sgst || "-"}</td>
+                                        <td className="border px-2 py-1">{matchedProduct?.igst || "-"}</td>
                                         <td className="border px-2 py-1"> {matchedProduct?.sp
                                             ? (matchedProduct.sp * product.quantity).toFixed(2)
-                                            : "N/A"}</td>
+                                            : "-"}</td>
                                         <td className="border px-2 py-1"> {matchedProduct?.dp
                                             ? (matchedProduct.dp * product.quantity).toFixed(2)
-                                            : "N/A"}</td>
+                                            : "-"}</td>
                                     </tr>
                                 );
                             })}
                             <tr className="font-semibold bg-gray-50">
                                 <td className="border border-gray-400 px-2 py-1 text-center" colSpan={5}>Total</td>
                                 <td className="border border-gray-400 px-2 py-1">{totals.totalDP.toFixed(2)}</td>
-                                <td className="border border-gray-400 px-2 py-1">Total Taxable Value</td>
-                                <td className="border border-gray-400 px-2 py-1">Total CGST</td>
-                                <td className="border border-gray-400 px-2 py-1">Total SGST</td>
-                                <td className="border border-gray-400 px-2 py-1">Total IGST</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totaltax.toFixed(2)}</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totalCGST.toFixed(2)}</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totalSGST.toFixed(2)}</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totalIGST.toFixed(2)}</td>
                                 <td className="border border-gray-400 px-2 py-1">{totals.totalSP.toFixed(2)}</td>
                                 <td className="border border-gray-400 px-2 py-1">{totals.totalDP.toFixed(2)}</td>
                             </tr>
@@ -182,9 +332,144 @@ export default function OrderDetails({ data }) {
                     </table>
                 </div>
 
+
+                <div className="border border-t-0 border-gray-400 rounded-b-lg w-full mx-auto bg-white text-sm mt-1">
+                    <div className="lg:grid grid-cols-2">
+                        <div className="border flex justify-center flex-col items-center">
+                            <p className=" font-medium mb-4 underline">Total Invoice Amount in words</p>
+                            <p className=" capitalize font-semibold text-lg">{totalDPWords}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-0">
+
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Total Amount Before Tax</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">
+                                    ₹{" "}
+                                    {(
+                                        Number(totals.totalDP.toFixed(2)) -
+                                        (Number(totals.totalIGST.toFixed(2)) +
+                                            Number(totals.totalSGST.toFixed(2)) +
+                                            Number(totals.totalCGST.toFixed(2)))
+                                    ).toFixed(2)}
+                                </span>
+                            </div>
+
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Add CGST</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {totals.totalCGST.toFixed(2)}</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Add SGST</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {totals.totalSGST.toFixed(2)}</span>
+                            </div>
+
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Add IGST</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {totals.totalIGST.toFixed(2)}</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Total Tax Amount</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {(Number(totals.totalIGST.toFixed(2)) + Number(totals.totalSGST.toFixed(2)) + Number(totals.totalCGST.toFixed(2))).toFixed(2)}</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Total Amount After Tax</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {totals.totalDP.toFixed(2)}</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+                <div className="border border-t-0 border-gray-400 rounded-b-lg w-full mx-auto bg-white text-sm mt-1">
+                    <div className="lg:grid grid-cols-3">
+                        <div className="border flex justify-end flex-col items-center">
+                            <p className=" font-medium mb-4 ">Common Seal</p>
+                        </div>
+                        <div className="col-span-2">
+
+
+                            <div className="border border-gray-800 p-2 text-center">
+                                <span className="font-semibold">Certified that the particulars given above are true and corret </span>
+                            </div>
+                            <div className="border border-gray-800 p-2 text-center">
+                                <span className="font-semibold">For ANAADIPRO WELLNESS PRIVATE LIMITED</span>
+                            </div>
+                            <div className="border border-gray-800 p-2 text-center">
+                                <span className="font-semibold">Authorized Signatory</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+
                 {/* Error / Loading */}
                 {loading && <p className="text-center text-blue-500">Loading products...</p>}
                 {error && <p className="text-center text-red-500">{error}</p>}
+            </div>
+
+
+
+            <div className="w-full max-w-md mt-6 p-4 bg-white border border-gray-300 rounded shadow-sm">
+                {orderStatus && (
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Date:</label>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <DatePicker
+                                selected={newDeliveryDate}
+                                onChange={(date) => setNewDeliveryDate(date)}
+                                dateFormat="dd/MM/yyyy"
+                                className="border border-gray-300 rounded px-2 py-1 text-sm w-40"
+                                placeholderText="Select a date"
+                            />
+                            <button
+                                onClick={handleDeliveryDateUpdate}
+                                disabled={isLoading}
+                                className="text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-1 rounded transition"
+                            >
+                                {isLoading ? 'Updating...' : 'Update Date'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                        onClick={() => handleStatusUpdate(true)}
+                        disabled={orderStatus || isLoading}
+                        className={`flex-1 py-2 px-4 rounded text-white font-semibold transition duration-200 ${orderStatus || isLoading
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-green-600 hover:bg-green-700'
+                            }`}
+                    >
+                        {isLoading && !orderStatus ? 'Approving...' : 'Approve'}
+                    </button>
+                    {orderStatus && (
+                        <button
+                            onClick={() => handleDeliveryUpdate(true)}
+                            disabled={deliveryStatus || isLoading}
+                            className={`flex-1 py-2 px-4 rounded text-white font-semibold transition duration-200 ${deliveryStatus || isLoading
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
+                        >
+                            {isLoading && !deliveryStatus ? 'Updating...' : 'Mark as Delivered'}
+                        </button>
+                    )}
+                </div>
             </div>
         </>
     );
