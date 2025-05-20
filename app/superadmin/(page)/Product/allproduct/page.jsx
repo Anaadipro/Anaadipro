@@ -21,7 +21,6 @@ export default function Page() {
       try {
         const response = await axios.get("/api/Product/Product/fetch/s");
         setProducts(response.data.data || []);
-        setFilteredProducts(response.data.data || []);
       } catch (error) {
         setError(error.response?.data?.message || "Failed to fetch products.");
       } finally {

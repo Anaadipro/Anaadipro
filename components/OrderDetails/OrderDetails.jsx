@@ -1,273 +1,191 @@
 "use client";
-import React, { useState } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
 export default function OrderDetails({ data }) {
-    const [orderStatus, setOrderStatus] = useState(data.status);
-    const [isLoading, setIsLoading] = useState(false);
-    const [deliveryStatus, setDeliveryStatus] = useState(data.deliver);
-    const [newDeliveryDate, setNewDeliveryDate] = useState(
-        data.deliverdate ? new Date(data.deliverdate) : null
-    );
-
-    const o = data._id
-    const handleStatusUpdate = async (newStatus) => {
-        setIsLoading(true);
-        try {
-            const response = await fetch(`/api/order/update/${o}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: data._id,
-                    status: newStatus,
-                }),
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                setOrderStatus(newStatus);
-                alert(`Order ${newStatus ? 'approved' : 'unapproved'} successfully!`);
-                window.location.reload();
-            } else {
-                throw new Error(result.message || 'Failed to update status');
-            }
-        } catch (error) {
-            console.error('Error updating order status:', error);
-            alert('Failed to update order status. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    const handleDeliveryUpdate = async (newStatus) => {
-        setIsLoading(true);
-        try {
-            const response = await fetch(`/api/order/deliveryupdate/${data._id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ deliver: newStatus }),
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                setDeliveryStatus(newStatus);
-                alert(`Order marked as ${newStatus ? 'Delivered' : 'Not Delivered'} successfully!`);
-            } else {
-                throw new Error(result.message || 'Failed to update delivery status');
-            }
-        } catch (error) {
-            console.error('Error updating delivery status:', error);
-            alert('Failed to update delivery status. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const totals = {
+        totalDP: 0,
+        totalSP: 0,
+        totalQty: 0,
     };
 
-    const handleDeliveryDateUpdate = async () => {
-        if (!newDeliveryDate) {
-            return alert('Please select a valid date.');
-        }
-
-        setIsLoading(true);
-        try {
-            const response = await fetch(`/api/order/update/${data._id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ deliverdate: new Date(newDeliveryDate) }),
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                alert('Delivery date updated successfully!');
-            } else {
-                throw new Error(result.message || 'Failed to update delivery date');
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setLoading(true);
+            setError("");
+            try {
+                const response = await axios.get("/api/Product/Product/fetch/s");
+                setProducts(response.data.data || []);
+            } catch (error) {
+                setError(error.response?.data?.message || "Failed to fetch products.");
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error('Error updating delivery date:', error);
-            alert('Failed to update delivery date. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        };
 
+        fetchProducts();
+    }, []);
+
+    // Function to get full product info by name
+    const getProductDetails = (productName) => {
+        return products.find((p) => p.productname === productName);
+    };
+    data.productDetails.forEach(product => {
+        const matchedProduct = getProductDetails(product.product);
+        const quantity = product.quantity;
+
+        if (matchedProduct?.dp) {
+            totals.totalDP += matchedProduct.dp * quantity;
+        }
+        if (matchedProduct?.sp) {
+            totals.totalSP += matchedProduct.sp * quantity;
+        }
+
+        totals.totalQty += quantity;
+    });
     return (
-        <div className="lg:p-8  min-h-screen text-gray-800 dark:text-gray-200">
-            <div className="max-w-4xl mx-auto">
-
-
-                {/* Order Information Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 ">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Order Information</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>ID:</strong> {data._id}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                <strong>Date:</strong> {new Date(data.date).toLocaleDateString('en-GB')}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                <strong>Transaction ID:</strong> {data.transactionId || 'N/A'}
-                            </p>
-                        </div>
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Payment Mode:</strong> {data.paymentmod}</p>
-                            <p className="text-sm">
-                                <strong>Status:</strong>{' '}
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${orderStatus ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                                    {orderStatus ? 'Completed' : 'Pending'}
-                                </span>
-                            </p>
-                            <p className="text-sm">
-                                <strong>Delivery Status:</strong>{' '}
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${deliveryStatus ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                                    {deliveryStatus ? 'Completed' : 'Pending'}
-                                </span>
-                            </p>
-                            {orderStatus && (
-                                <p className="text-sm">
-                                    <strong>Delivery Date:</strong>{' '}
-                                    <DatePicker
-                                        selected={newDeliveryDate}
-                                        onChange={(date) => setNewDeliveryDate(date)}
-                                        dateFormat="dd/MM/yyyy"
-                                        className=""
-                                        placeholderText="Select a date"
-                                    />
-                                    <button
-                                        onClick={handleDeliveryDateUpdate}
-                                        disabled={isLoading}
-                                        className="text-xs bg-green-600 text-white px-2 rounded"
-                                    >
-                                        {isLoading ? 'Updating...' : 'Update Date'}
-                                    </button>
-                                </p>
-                            )}
-
-                        </div>
-
-                    </div>
-
-
-
-
-                    {/* Approve/Unapprove Buttons */}
-                    <div className="mt-4 flex gap-4">
-                        <button
-                            onClick={() => handleStatusUpdate(true)}
-                            disabled={orderStatus || isLoading}
-                            className={`flex-1 py-2 px-4 rounded-lg text-white font-medium transition-colors duration-200 ${orderStatus || isLoading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-green-600 hover:bg-green-700'
-                                }`}
-                        >
-                            {isLoading && !orderStatus ? 'Approving...' : 'Approve'}
-                        </button>
-                        {orderStatus && (
-                            <button
-                                onClick={() => handleDeliveryUpdate(true)}
-                                disabled={deliveryStatus || isLoading}
-                                className={`flex-1 py-2 px-4 rounded-lg text-white font-medium transition-colors duration-200 ${deliveryStatus || isLoading
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                                    }`}
-                            >
-                                {isLoading && !deliveryStatus ? 'Updating...' : 'Mark as Delivered'}
-                            </button>
-                        )}
-                    </div>
+        <>
+            <div className="mx-auto m-8 p-4 border border-gray-400 rounded shadow text-sm bg-white">
+                {/* Header */}
+                <div className="text-center mb-2">
+                    <h1 className="font-bold text-lg">ANAADIPRO WELLNESS PRIVATE LIMITED</h1>
+                    <p className="font-semibold">Address - Hore Chandra nagar.</p>
+                    <p className="font-semibold">DTR P9 Noel School Gird Gwalior Fort Gwalior Pin code - 474008</p>
+                    <p className="font-semibold mt-4">GSTIN : 1234567890</p>
                 </div>
 
-                {/* Customer Information Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 ">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Customer Information</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>DS Code:</strong> {data.dscode}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>DS Name:</strong> {data.dsname}</p>
+                {/* Invoice Info */}
+                <div className="border border-gray-400 rounded-lg p-4 w-full mx-auto bg-white text-sm">
+                    <div className="text-center font-bold text-base border-b border-gray-800 pb-2 mb-4">
+                        Tax Invoice
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-0">
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Invoice No.: </span>{data.orderNo}
                         </div>
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Mobile:</strong> {data.mobileno}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Address:</strong> {data.address}</p>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Transport Mode: </span>
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Invoice Date: </span>{new Date(data.date).toLocaleDateString('en-GB')}
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Vehicle Number: </span>
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Reverse Charges (Y/N): </span>NO
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Date Of Supply: </span>
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">State: </span>Rajasthan
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Place Of Supply: </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Shipping Information Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 ">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Shipping Details</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Address:</strong> {data.shippingAddress}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Mobile:</strong> {data.shippingmobile}</p>
+                {/* Billing Section */}
+                <div className="border border-t-0 border-gray-400 rounded-b-lg p-4 w-full mx-auto bg-white text-sm mt-1">
+                    <div className="grid grid-cols-2 gap-0">
+                        <div className="border border-gray-800 p-2 text-center font-semibold bg-gray-100">
+                            Bill To Party
                         </div>
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Pincode:</strong> {data.shippinpPincode}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Charge:</strong> ₹{data.shippingcharge}</p>
+                        <div className="border border-gray-800 p-2 text-center font-semibold bg-gray-100">
+                            Ship To Party
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Name: </span>{data.dsname}
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Name: </span>{data.dsname}
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Address: </span>{data.address}
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Address: </span>{data.address}
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Mobile No: </span>{data.mobileno}
+                        </div>
+                        <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Mobile No: </span>{data.mobileno}
                         </div>
                     </div>
                 </div>
 
-                {/* Product Details Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Products</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                                <tr>
-                                    <th className="px-4 py-3 text-left rounded-tl-lg">Product Group</th>
-                                    <th className="px-4 py-3 text-left">Product</th>
-                                    <th className="px-4 py-3 text-left rounded-tr-lg">Quantity</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.productDetails.map((product, index) => (
-                                    <tr
-                                        key={index}
-                                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                                    >
-                                        <td className="px-4 py-3">{product.productgroup}</td>
-                                        <td className="px-4 py-3">{product.product}</td>
-                                        <td className="px-4 py-3">{product.quantity}</td>
+                {/* Product Table */}
+                <div className="mt-5 border-t border-b border-dashed border-gray-500 py-2 my-2 overflow-x-auto">
+                    <table className="min-w-full table-auto border border-gray-400 text-sm md:text-base">
+                        <thead className="bg-gray-100">
+                            <tr className="text-left">
+                                <th className="border px-2 py-1">Sr.</th>
+                                <th className="border px-2 py-1">Product Name</th>
+                                <th className="border px-2 py-1">HSN Code</th>
+                                <th className="border px-2 py-1">Qty</th>
+                                <th className="border px-2 py-1">Rate</th>
+                                <th className="border px-2 py-1">Amount</th>
+                                <th className="border px-2 py-1">Taxable Value</th>
+                                <th className="border px-2 py-1">CGST</th>
+                                <th className="border px-2 py-1">SGST</th>
+                                <th className="border px-2 py-1">IGST</th>
+                                <th className="border px-2 py-1">Total SP</th>
+                                <th className="border px-2 py-1">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.productDetails.map((product, index) => {
+                                const matchedProduct = getProductDetails(product.product);
+                                return (
+                                    <tr key={index} className="bg-white">
+                                        <td className="border px-2 py-1">{index + 1}</td>
+                                        <td className="border px-2 py-1">{product.product}</td>
+                                        <td className="border px-2 py-1">{matchedProduct?.hsn || "N/A"}</td>
+                                        <td className="border px-2 py-1">{product.quantity}</td>
+                                        <td className="border px-2 py-1">{matchedProduct?.dp || "N/A"}</td>
+                                        <td className="border px-2 py-1"> {matchedProduct?.dp
+                                            ? (matchedProduct.dp * product.quantity).toFixed(2)
+                                            : "N/A"}</td>
+                                        <td className="border px-2 py-1">-</td>
+                                        <td className="border px-2 py-1">-</td>
+                                        <td className="border px-2 py-1">-</td>
+                                        <td className="border px-2 py-1">-</td>
+                                        <td className="border px-2 py-1"> {matchedProduct?.sp
+                                            ? (matchedProduct.sp * product.quantity).toFixed(2)
+                                            : "N/A"}</td>
+                                        <td className="border px-2 py-1"> {matchedProduct?.dp
+                                            ? (matchedProduct.dp * product.quantity).toFixed(2)
+                                            : "N/A"}</td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                );
+                            })}
+                            <tr className="font-semibold bg-gray-50">
+                                <td className="border border-gray-400 px-2 py-1 text-center" colSpan={5}>Total</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totalDP.toFixed(2)}</td>
+                                <td className="border border-gray-400 px-2 py-1">Total Taxable Value</td>
+                                <td className="border border-gray-400 px-2 py-1">Total CGST</td>
+                                <td className="border border-gray-400 px-2 py-1">Total SGST</td>
+                                <td className="border border-gray-400 px-2 py-1">Total IGST</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totalSP.toFixed(2)}</td>
+                                <td className="border border-gray-400 px-2 py-1">{totals.totalDP.toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                {/* Financial Details Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 ">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Financial Summary</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Sale Group:</strong> {data.salegroup || 'N/A'}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>CF Type:</strong> {data.cftype}</p>
-                        </div>
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Total SP:</strong> ₹{data.totalsp}</p>
-                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400"><strong>Net Amount:</strong> ₹{data.netamount}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Remarks Card */}
-                {data.remarks && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 ">
-                        <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Remarks</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{data.remarks}</p>
-                    </div>
-                )}
-
-                {/* Metadata */}
-                <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    <p>Created: {new Date(data.createdAt).toLocaleString('en-GB')}</p>
-                    <p>Updated: {new Date(data.updatedAt).toLocaleString('en-GB')}</p>
-                </div>
+                {/* Error / Loading */}
+                {loading && <p className="text-center text-blue-500">Loading products...</p>}
+                {error && <p className="text-center text-red-500">{error}</p>}
             </div>
-        </div>
+        </>
     );
 }
