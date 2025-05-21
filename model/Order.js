@@ -34,18 +34,23 @@ const OrderSchema = new Schema(
     },
     { timestamps: true }
 );
-
 OrderSchema.pre("save", async function (next) {
     if (this.isNew) {
-        const lastorder = await mongoose.model("Orders1111").findOne({}, {}, { sort: { orderNo: -1 } });
-        if (lastorder && lastorder.orderNo) {
-            this.orderNo = (parseInt(lastorder.orderNo, 10) + 1).toString();
-        } else {
-            this.orderNo = "1";
+        const orders = await mongoose.model("Orders1111").find({});
+        let maxOrder = 0;
+
+        for (const order of orders) {
+            const num = parseInt(order.orderNo, 10);
+            if (!isNaN(num) && num > maxOrder) {
+                maxOrder = num;
+            }
         }
+
+        this.orderNo = (maxOrder + 1).toString();
     }
     next();
 });
+
 const OrderModel =
     mongoose.models.Orders1111 || mongoose.model("Orders1111", OrderSchema);
 
