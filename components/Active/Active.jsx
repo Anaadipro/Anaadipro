@@ -21,7 +21,8 @@ export default function Active({ userData }) {
   };
 
   const getOptions = () => {
-    const earnsp = userData.earnsp;
+    const earnsp = Number(userData.saosp) + Number(userData.sgosp);
+
     const options = [];
 
     if (earnsp >= 25) options.push(25);
@@ -69,7 +70,8 @@ export default function Active({ userData }) {
   return (
     <div className="w-full max-w-xl mx-auto p-6 bg-gray-50 rounded transition-all duration-300 border border-gray-200 dark:border-gray-700">
       <h2 className="text-3xl font-semibold text-center mb-6 text-gray-800 dark:text-white tracking-wide">
-        Available SP: <span className="text-indigo-600">{userData.earnsp}</span>
+       Available SP: <span className="text-indigo-600">{Number(userData.saosp) + Number(userData.sgosp)}</span>
+
       </h2>
       <Toaster position="top-center" reverseOrder={false} />
       {errorMessage && (

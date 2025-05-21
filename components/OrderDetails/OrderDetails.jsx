@@ -51,7 +51,7 @@ export default function OrderDetails({ data }) {
                 });
                 alert(`Order ${newStatus ? 'approved' : 'unapproved'} successfully!`);
 
-                // window.location.reload();
+                window.location.reload();
             } else {
                 throw new Error(result.message || 'Failed to update status');
             }
