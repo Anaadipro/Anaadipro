@@ -8,8 +8,8 @@ export default function Active({ userData }) {
   const [formData, setFormData] = useState({
     activesp: "",
   });
-
   const [errorMessage, setErrorMessage] = useState("");
+  // const [earnsp, setEarnsp] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -19,9 +19,10 @@ export default function Active({ userData }) {
     });
     setErrorMessage(""); // Clear error on change
   };
+   const earnsp = Number(userData.saosp) + Number(userData.sgosp);
 
   const getOptions = () => {
-    const earnsp = Number(userData.saosp) + Number(userData.sgosp);
+   const earnsp = Number(userData.saosp) + Number(userData.sgosp);
 
     const options = [];
 
@@ -70,8 +71,7 @@ export default function Active({ userData }) {
   return (
     <div className="w-full max-w-xl mx-auto p-6 bg-gray-50 rounded transition-all duration-300 border border-gray-200 dark:border-gray-700">
       <h2 className="text-3xl font-semibold text-center mb-6 text-gray-800 dark:text-white tracking-wide">
-       Available SP: <span className="text-indigo-600">{Number(userData.saosp) + Number(userData.sgosp)}</span>
-
+        Available SP: <span className="text-indigo-600">{earnsp}</span>
       </h2>
       <Toaster position="top-center" reverseOrder={false} />
       {errorMessage && (
