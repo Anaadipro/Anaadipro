@@ -3,18 +3,26 @@ import PaymentHistoryModel from "@/model/PaymentHistory";
 import UserModel from "@/model/User";
 
 async function getGroupedDsCodes(mainDs) {
+    const allUsers = await UserModel.find().select("dscode pdscode group").lean();
+
+    const graph = new Map();
+    for (const user of allUsers) {
+        if (!graph.has(user.pdscode)) graph.set(user.pdscode, []);
+        graph.get(user.pdscode).push(user);
+    }
+
     const saoDsCodes = new Set();
     const sgoDsCodes = new Set();
     const allDsCodes = new Set([mainDs]);
-    const queue = [{ ds: mainDs, group: null }];
     const seen = new Set([mainDs]);
+
+    const queue = [{ ds: mainDs, group: null }];
 
     while (queue.length > 0) {
         const { ds, group } = queue.shift();
+        const children = graph.get(ds) || [];
 
-        const users = await UserModel.find({ pdscode: ds }).select("dscode pdscode group");
-
-        for (const user of users) {
+        for (const user of children) {
             if (seen.has(user.dscode)) continue;
             seen.add(user.dscode);
             allDsCodes.add(user.dscode);
@@ -37,6 +45,7 @@ async function getGroupedDsCodes(mainDs) {
         sgoDsCodes: Array.from(sgoDsCodes),
     };
 }
+
 
 export async function GET(req) {
    await dbConnect();
