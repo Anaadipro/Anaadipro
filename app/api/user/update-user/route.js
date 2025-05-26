@@ -24,12 +24,12 @@ export async function PATCH(req) {
             );
         }
 
-        // Add current date if usertype is 1
+        // Set activation date if usertype is 1
         if (data.usertype === "1") {
             data.activedate = new Date();
         }
 
-        // Only hash password if it's changed
+        // Hash password only if changed
         if (data.password && data.password !== user.password) {
             data.password = await bcrypt.hash(data.password, 10);
         }
@@ -41,15 +41,19 @@ export async function PATCH(req) {
         const paymentHistories = [];
 
         if (data.usertype && data.usertype !== user.usertype) {
-            // Deduct activesp from earnsp
+            // Deduct activesp from user's earnsp
             earnsp -= activesp;
             data.earnsp = earnsp.toString();
 
             let currentParentCode = user.pdscode;
             let currentChildGroup = user.group;
 
+            // Fetch all users once to avoid multiple DB hits
+            const allParents = await UserModel.find({}).lean();
+            const parentMap = Object.fromEntries(allParents.map(u => [u.dscode, u]));
+
             while (currentParentCode && currentParentCode !== "0") {
-                const parent = await UserModel.findOne({ dscode: currentParentCode }).lean();
+                const parent = parentMap[currentParentCode];
                 if (!parent) break;
 
                 const update = {};
@@ -68,7 +72,7 @@ export async function PATCH(req) {
 
                 paymentHistories.push({
                     dsid: parent.dscode,
-                    dsgroup:parent.group,
+                    dsgroup: parent.group,
                     amount: "0",
                     sp: activesp.toString(),
                     group: currentChildGroup,
@@ -89,7 +93,7 @@ export async function PATCH(req) {
             }
         }
 
-        // Add new level info if provided
+        // Append level info if provided
         if (data.level) {
             data.LevelDetails = [
                 ...(user.LevelDetails || []),
@@ -101,7 +105,7 @@ export async function PATCH(req) {
             ];
         }
 
-        // Final user update
+        // Final update
         await UserModel.updateOne({ _id: data.id }, { $set: data });
 
         return new Response(
