@@ -114,7 +114,7 @@ export async function PATCH(req) {
         );
 
     } catch (error) {
-        console.error("User update error:", error);
+        console.error("User update error :", error);
         return new Response(
             JSON.stringify({ success: false, message: "Internal server error. Try again later." }),
             { status: 500 }
