@@ -113,6 +113,7 @@ export default function PaymentHistoryPage() {
               <th className="p-2 border">SP</th>
               <th className="p-2 border">Group</th>
               <th className="p-2 border">Type</th>
+              <th className="p-2 border">Reference</th>
               <th className="p-2 border">Pair Status</th>
               <th className="p-2 border">Monthly Status</th>
               <th className="p-2 border">Created At</th>
@@ -134,6 +135,7 @@ export default function PaymentHistoryPage() {
                   <td className="p-2 border">{item.sp || "-"}</td>
                   <td className="p-2 border">{item.group || "-"}</td>
                   <td className="p-2 border">{item.type || "-"}</td>
+                  <td className="p-2 border">{item.referencename || "-"}</td>
                   <td className="p-2 border">{item.pairstatus ? '✔️' : '❌'}</td>
                   <td className="p-2 border">{item.monthlystatus ? '✔️' : '❌'}</td>
                   <td className="p-2 border">{dayjs(item.createdAt).format('YYYY-MM-DD')}</td>
