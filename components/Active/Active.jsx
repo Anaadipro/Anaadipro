@@ -4,12 +4,21 @@ import React, { useState } from "react";
 import axios from "axios";
 import { signOut } from "next-auth/react";
 import toast, { Toaster } from "react-hot-toast";
-export default function Active({ userData }) {
-  const [formData, setFormData] = useState({
-    activesp: "",
-  });
 
+export default function Active({ userData }) {
+  const [formData, setFormData] = useState({ activesp: "" });
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ New loading state
+
+  const earnsp = Number(userData.saosp || 0) + Number(userData.sgosp || 0);
+
+  const getOptions = () => {
+    const options = [];
+    if (earnsp >= 25) options.push(25);
+    if (earnsp >= 50) options.push(50);
+    if (earnsp >= 100) options.push(100);
+    return options;
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -17,18 +26,7 @@ export default function Active({ userData }) {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
-    setErrorMessage(""); // Clear error on change
-  };
-
-  const getOptions = () => {
-    const earnsp = userData.earnsp;
-    const options = [];
-
-    if (earnsp >= 25) options.push(25);
-    if (earnsp >= 50) options.push(50);
-    if (earnsp >= 100) options.push(100);
-
-    return options;
+    setErrorMessage("");
   };
 
   const handleSubmit = async (e) => {
@@ -47,29 +45,28 @@ export default function Active({ userData }) {
     }
 
     try {
+      setLoading(true); // ✅ Start loading
       const { data: updatedData } = await axios.patch("/api/user/update-user/", {
         id: userData._id,
         activesp: formData.activesp,
-        usertype: 1,
+        usertype: "1",
       });
 
-      console.log("User updated:", updatedData);
       toast.success("Activated successfully!");
-
-      setTimeout(() => {
-        signOut(); // Logout after short delay so toast is visible
-      }, 1500);
-      setErrorMessage(""); // Clear any error after success
+      setErrorMessage("");
+      signOut();
     } catch (error) {
       console.error("Update failed:", error);
       setErrorMessage("Failed to update user");
+    } finally {
+      setLoading(false); // ✅ Stop loading
     }
   };
 
   return (
     <div className="w-full max-w-xl mx-auto p-6 bg-gray-50 rounded transition-all duration-300 border border-gray-200 dark:border-gray-700">
       <h2 className="text-3xl font-semibold text-center mb-6 text-gray-800 dark:text-white tracking-wide">
-        Available SP: <span className="text-indigo-600">{userData.earnsp}</span>
+        Available SP: <span className="text-indigo-600">{earnsp}</span>
       </h2>
       <Toaster position="top-center" reverseOrder={false} />
       {errorMessage && (
@@ -89,7 +86,7 @@ export default function Active({ userData }) {
             onChange={handleChange}
             className="w-full px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-400 outline-none shadow-inner transition"
             required
-            disabled={getOptions().length === 0}
+            disabled={getOptions().length === 0 || loading} // ✅ Disable during loading
           >
             <option value="">Select SP</option>
             {getOptions().map((option) => (
@@ -102,9 +99,11 @@ export default function Active({ userData }) {
 
         <button
           type="submit"
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-xl"
+          disabled={loading} // ✅ Disable during loading
+          className={`w-full ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            } text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg`}
         >
-          Submit
+          {loading ? "Updating..." : "Submit"}
         </button>
       </form>
     </div>

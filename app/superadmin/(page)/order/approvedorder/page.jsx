@@ -69,27 +69,27 @@ export default function PendingOrders() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 <div>
                     <label className="block text-sm font-medium">Date From</label>
-                    <input 
-                        type="date" 
-                        value={dateFrom} 
+                    <input
+                        type="date"
+                        value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
-                        className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white" 
+                        className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                     />
                 </div>
                 <div>
                     <label className="block text-sm font-medium">Date To</label>
-                    <input 
-                        type="date" 
-                        value={dateTo} 
+                    <input
+                        type="date"
+                        value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
-                        className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white" 
+                        className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                     />
                 </div>
                 <div>
                     <label className="block text-sm font-medium">Order No</label>
-                    <input 
-                        type="text" 
-                        value={orderNoFilter} 
+                    <input
+                        type="text"
+                        value={orderNoFilter}
                         onChange={(e) => setOrderNoFilter(e.target.value)}
                         className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                         placeholder="Filter by order number"
@@ -97,16 +97,16 @@ export default function PendingOrders() {
                 </div>
                 <div>
                     <label className="block text-sm font-medium">DsCode</label>
-                    <input 
-                        type="text" 
-                        value={dscodeFilter} 
+                    <input
+                        type="text"
+                        value={dscodeFilter}
                         onChange={(e) => setDscodeFilter(e.target.value)}
                         className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                         placeholder="Filter by dscode"
                     />
                 </div>
-                <button 
-                    onClick={applyFilter} 
+                <button
+                    onClick={applyFilter}
                     className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full"
                 >
                     Show
@@ -130,6 +130,7 @@ export default function PendingOrders() {
                                 <th className="border border-gray-300 px-2 md:px-4 py-2">Mobile Number</th>
                                 <th className="border border-gray-300 px-2 md:px-4 py-2">Amount</th>
                                 <th className="border border-gray-300 px-2 md:px-4 py-2">Payment Mode</th>
+                                <th className="border border-gray-300 px-2 md:px-4 py-2">Sp</th>
                                 <th className="border border-gray-300 px-2 md:px-4 py-2">Date</th>
                                 <th className="border border-gray-300 px-2 md:px-4 py-2">Action</th>
                             </tr>
@@ -143,6 +144,7 @@ export default function PendingOrders() {
                                         <td className="border border-gray-300 px-2 md:px-4 py-2">{order.mobileno}</td>
                                         <td className="border border-gray-300 px-2 md:px-4 py-2">{order.netamount}</td>
                                         <td className="border border-gray-300 px-2 md:px-4 py-2">{order.paymentmod}</td>
+                                        <td className="border border-gray-300 px-2 md:px-4 py-2">{order.totalsp}</td>
                                         <td className="border border-gray-300 px-2 md:px-4 py-2">{new Date(order.date).toLocaleDateString("en-GB")}</td>
                                         <td className="border border-gray-300 px-2 md:px-4 py-2">
                                             <button onClick={() => openModal(order)} className="text-blue-500 hover:text-blue-700">View</button>
@@ -170,7 +172,7 @@ export default function PendingOrders() {
                             ×
                         </button>
                         <h2 className="text-2xl font-semibold mb-4">Order Details - {selectedOrder.orderNo}</h2>
-                        <OrderDetails data={selectedOrder}/>
+                        <OrderDetails data={selectedOrder} />
                     </div>
                 </div>
             )}

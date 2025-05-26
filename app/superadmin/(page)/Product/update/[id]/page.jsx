@@ -14,6 +14,11 @@ export default function AddOrUpdateProductPage() {
         dp: "",
         sp: "",
         mrp: "",
+        hsn: "",
+        taxvalue: "",
+        cgst: "",
+        sgst: "",
+        igst: ""
     });
 
     const [productGroups, setProductGroups] = useState([]);
@@ -53,6 +58,13 @@ export default function AddOrUpdateProductPage() {
                         dp: fetchedData.dp || "",
                         sp: fetchedData.sp || "",
                         mrp: fetchedData.mrp || "",
+                        hsn: fetchedData.hsn || "",
+                        taxvalue: fetchedData.taxvalue || "",
+                        cgst: fetchedData.cgst || "",
+                        sgst: fetchedData.sgst || "",
+                        igst: fetchedData.igst || "",
+
+
                     });
                 } catch (error) {
                     setError("Failed to fetch product details.");
@@ -85,7 +97,7 @@ export default function AddOrUpdateProductPage() {
     // Handle Submit (Add or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.productname || !formData.group || !formData.dp || !formData.sp || !formData.mrp || loading) {
+        if (!formData.productname || !formData.group || !formData.dp || !formData.sp || !formData.mrp || !formData.hsn || !formData.taxvalue || !formData.igst || loading) {
             setError("All fields are required.");
             return;
         }
@@ -102,7 +114,13 @@ export default function AddOrUpdateProductPage() {
             } else {
                 response = await axios.post("/api/Product/Product/create", formData);
                 setSuccess(response.data.message || "Product added successfully.");
-                setFormData({ image: "", productname: "", sp: "", mrp: "", group: "", dp: "" });
+                setFormData({
+                    image: "", productname: "", sp: "", mrp: "", group: "", dp: "", hsn: "",
+                    taxvalue: "",
+                    cgst: "",
+                    sgst: "",
+                    igst: ""
+                });
             }
         } catch (error) {
             setError(error.response?.data?.message || "Failed to process request.");
@@ -139,23 +157,69 @@ export default function AddOrUpdateProductPage() {
             {fetchError && <p className="text-red-500">{fetchError}</p>}
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                <input type="text" name="productname" placeholder="Product Name" value={formData.productname} onChange={handleChange} className="w-full p-2 border rounded" required />
+                <div>
+                    <label className="block mb-1 font-medium">Product Name</label>
+                    <input type="text" name="productname" placeholder="Product Name" value={formData.productname} onChange={handleChange} className="w-full p-2 border rounded" required />
+                </div>
 
-                <select name="group" value={formData.group} onChange={handleChange} className="w-full p-2 border rounded" required disabled={fetching || productGroups.length === 0}>
-                    <option value="">Select Group</option>
-                    {productGroups.map((group) => (
-                        <option key={group._id} value={group.groupname}>{group.groupname}</option>
-                    ))}
-                </select>
+                <div>
+                    <label className="block mb-1 font-medium">Group</label>
+                    <select name="group" value={formData.group} onChange={handleChange} className="w-full p-2 border rounded" required disabled={fetching || productGroups.length === 0}>
+                        <option value="">Select Group</option>
+                        {productGroups.map((group) => (
+                            <option key={group._id} value={group.groupname}>{group.groupname}</option>
+                        ))}
+                    </select>
+                </div>
 
-                <input type="number" name="sp" placeholder="Selling Price" value={formData.sp} onChange={handleChange} className="w-full p-2 border rounded" required />
-                <input type="number" name="dp" placeholder="Discount Price" value={formData.dp} onChange={handleChange} className="w-full p-2 border rounded" required />
-                <input type="number" name="mrp" placeholder="Market Price" value={formData.mrp} onChange={handleChange} className="w-full p-2 border rounded" required />
+                <div>
+                    <label className="block mb-1 font-medium">Selling Price</label>
+                    <input type="number" name="sp" placeholder="Selling Price" value={formData.sp} onChange={handleChange} className="w-full p-2 border rounded" required />
+                </div>
 
-                <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} className="w-full p-2 border rounded" />
-                {uploading && <p className="text-blue-500">Uploading image...</p>}
-                {formData.image && <img src={formData.image} alt="Uploaded Preview" className="w-32 h-32 object-cover rounded" />}
+                <div>
+                    <label className="block mb-1 font-medium">Discount Price</label>
+                    <input type="number" name="dp" placeholder="Discount Price" value={formData.dp} onChange={handleChange} className="w-full p-2 border rounded" required />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">Market Price</label>
+                    <input type="number" name="mrp" placeholder="Market Price" value={formData.mrp} onChange={handleChange} className="w-full p-2 border rounded" required />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">HSN Code</label>
+                    <input type="number" name="hsn" placeholder="HSN Code" min={0} value={formData.hsn} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">Tax Value</label>
+                    <input type="number" name="taxvalue" placeholder="Tax Value" min={0} value={formData.taxvalue} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">CGST</label>
+                    <input type="number" name="cgst" placeholder="CGST" min={0} value={formData.cgst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">SGST</label>
+                    <input type="number" name="sgst" placeholder="SGST" min={0} value={formData.sgst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">IGST</label>
+                    <input type="text" name="igst" placeholder="IGST" value={formData.igst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+                </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">Product Image</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} className="w-full p-2 border rounded" />
+                    {uploading && <p className="text-blue-500 mt-1">Uploading image...</p>}
+                    {formData.image && <img src={formData.image} alt="Uploaded Preview" className="w-32 h-32 object-cover rounded mt-2" />}
+                </div>
             </form>
+
 
             <div className="flex gap-4">
                 <button type="submit" onClick={handleSubmit} disabled={loading} className={`w-40 p-2 text-white rounded transition ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}>

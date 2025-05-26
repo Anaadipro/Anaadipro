@@ -118,8 +118,8 @@ export default function Dashboard4({ dscode, fromDate, toDate }) {
                         <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><Star className="text-purple-500" /></div>
                         <p className="text-gray-700 dark:text-white font-semibold">Current Weak</p>
                     </div>
-                    <p className="text-gray-700 dark:text-white font-semibold">SAO SP: <span className="text-blue-800 ms-4">{data?.currentWeekSaoSP || 0}</span></p>
-                    <p className="text-gray-700 dark:text-white font-semibold">SGO SP: <span className="text-blue-800 ms-4">{data?.currentWeekSgoSP || 0}</span></p>
+                    <p className="text-gray-700 dark:text-white font-semibold">SAO SP: <span className="text-blue-800 ms-4">{rspData?.selfweeksaosp || 0}</span></p>
+                    <p className="text-gray-700 dark:text-white font-semibold">SGO SP: <span className="text-blue-800 ms-4">{rspData?.selfweeksgosp || 0}</span></p>
                 </div>
 
 
@@ -129,8 +129,8 @@ export default function Dashboard4({ dscode, fromDate, toDate }) {
                         <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><TrendingUp className="text-purple-500" /></div>
                         <p className="text-gray-700 dark:text-white font-semibold">Current RSP</p>
                     </div>
-                    <p className="text-gray-700 dark:text-white font-semibold">Self RSP:{rspData.currentWeekTotal}</p>
-                    <p className="text-gray-700 dark:text-white font-semibold">Team RSP:{rspData.teamCurrentWeekTotal}</p>
+                    <p className="text-gray-700 dark:text-white font-semibold">Self RSP:{rspData.selfRSPWeek}</p>
+                    <p className="text-gray-700 dark:text-white font-semibold">Team RSP:{rspData.teamRSPWeek}</p>
                 </div>
 
                 <div className="relative p-5 bg-white dark:bg-gray-800 rounded-lg shadow-lg border overflow-hidden">
@@ -139,8 +139,8 @@ export default function Dashboard4({ dscode, fromDate, toDate }) {
                         <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><Star className="text-purple-500" /></div>
                         <p className="text-gray-700 dark:text-white font-semibold">Total RSP</p>
                     </div>
-                    <p className="text-gray-700 dark:text-white font-semibold">Self RSP: {rspData.totalsp}</p>
-                    <p className="text-gray-700 dark:text-white font-semibold">Team RSP: {rspData.teamTotalsp}</p>
+                    <p className="text-gray-700 dark:text-white font-semibold">Self RSP: {rspData.selfRSPAll}</p>
+                    <p className="text-gray-700 dark:text-white font-semibold">Team RSP: {rspData.teamRSPAll}</p>
                 </div>
 
 

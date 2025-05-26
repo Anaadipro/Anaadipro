@@ -112,10 +112,14 @@ export default function Page() {
         usertype: formData.usertype === "100sp" ? "1" : formData.usertype,
         status: formData.status
       };
+
       if (formData.usertype === "100sp") {
         updateData.activesp = "100";
       }
-      // Only update level-related fields if a level is selected
+
+      const paymentRequests = [];
+
+      // LEVEL LOGIC
       if (formData.levelName) {
         const levelExists = userData?.LevelDetails?.some(
           (lvl) => lvl.levelName === formData.levelName
@@ -153,10 +157,27 @@ export default function Page() {
         updateData.LevelDetails = updatedLevelDetails;
         updateData.WalletDetails = updatedWalletDetails;
         updateData.level = formData.levelName;
+
+        const paymentPayload = {
+          dsid: userData.dscode,
+          group: userData.group || "",
+          levelname: formData.levelName,
+          type: "level update",
+          amount: "0",
+          bonus_income: selectedLevel?.bonus_income?.toString() || "0",
+          sp: "0",
+          orderno: "",
+          referencename: ""
+        };
+
+        if (userData.activesp === "100") {
+          paymentPayload.performance_income = selectedLevel?.performance_income?.toString() || "0";
+        }
+
+        paymentRequests.push(() => axios.post("/api/PaymentHistory/add", paymentPayload));
       }
 
-      // Update saosp or sgosp if spType and spAmount are provided
-      // Process Add SP
+      // ADD SP
       if (formData.spAddType && formData.spAddAmount) {
         const currentSp = parseFloat(formData.spAddType === "SAO" ? userData.saosp || 0 : userData.sgosp || 0);
         const addAmount = parseFloat(formData.spAddAmount);
@@ -165,11 +186,25 @@ export default function Page() {
           setLoading(false);
           return;
         }
+
         const newSp = (currentSp + addAmount).toString();
         updateData[formData.spAddType === "SAO" ? "saosp" : "sgosp"] = newSp;
+
+        paymentRequests.push(() =>
+          axios.post("/api/PaymentHistory/add", {
+            dsid: userData.dscode,
+            amount: "0",
+            sp: addAmount.toString(),
+            group: formData.spAddType || "",
+            type: "superadmin gift sp",
+            orderno: "",
+            levelname: "",
+            referencename: ""
+          })
+        );
       }
 
-      // Process Remove SP
+      // REMOVE SP
       if (formData.spRemoveType && formData.spRemoveAmount) {
         const currentSp = parseFloat(formData.spRemoveType === "SAO" ? userData.saosp || 0 : userData.sgosp || 0);
         const removeAmount = parseFloat(formData.spRemoveAmount);
@@ -183,15 +218,34 @@ export default function Page() {
           setLoading(false);
           return;
         }
+
         const newSp = (currentSp - removeAmount).toString();
         updateData[formData.spRemoveType === "SAO" ? "saosp" : "sgosp"] = newSp;
+
+        paymentRequests.push(() =>
+          axios.post("/api/PaymentHistory/add", {
+            dsid: userData.dscode,
+            amount: "0",
+            sp: `-${removeAmount.toString()}`,
+            group: userData.group || "",
+            type: "superadmin remove sp",
+            orderno: "",
+            levelname: "",
+            referencename: ""
+          })
+        );
       }
 
+      // ✅ USER UPDATE FIRST
+      await axios.patch("/api/user/update/", updateData);
 
-      const res = await axios.patch("/api/user/update/", updateData);
+      // ✅ THEN ALL PAYMENT HISTORY CALLS
+      for (const post of paymentRequests) {
+        await post();
+      }
 
       toast.success("User updated successfully!");
-      fetchUser(); // Refresh user data
+      window.location.reload();
       setFormData((prev) => ({
         ...prev,
         levelName: "",
@@ -202,7 +256,6 @@ export default function Page() {
         spRemoveType: "",
         spRemoveAmount: ""
       }));
-
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to update user.");
     } finally {
@@ -210,14 +263,50 @@ export default function Page() {
     }
   };
 
+
   if (loading) return <p className="p-4">Loading...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
 
-  const filteredLevels = levels.filter(
-    (lvl) =>
-      parseInt(lvl.sao) <= parseInt(saosp || 0) &&
-      parseInt(lvl.sgo) <= parseInt(sgosp || 0)
-  );
+  const filteredLevels = (() => {
+    const sortedLevels = [...levels].sort((a, b) => parseInt(a.sao) - parseInt(b.sao));
+
+    let cumulativeSao = 0;
+    let cumulativeSgo = 0;
+    let userCurrentLevelIndex = -1;
+
+    // Find current user level index based on LevelDetails (assumes latest one is current)
+    const currentLevelName = userData?.LevelDetails?.slice(-1)[0]?.levelName;
+
+    // Identify index of current level in sortedLevels
+    sortedLevels.forEach((lvl, index) => {
+      if (lvl.level_name === currentLevelName) {
+        userCurrentLevelIndex = index;
+      }
+    });
+
+    // Calculate next level's index
+    const nextLevelIndex = userCurrentLevelIndex + 1;
+
+    let result = [];
+
+    for (let i = 0; i <= nextLevelIndex; i++) {
+      cumulativeSao += parseInt(sortedLevels[i]?.sao || 0);
+      cumulativeSgo += parseInt(sortedLevels[i]?.sgo || 0);
+    }
+
+    const nextLevel = sortedLevels[nextLevelIndex];
+
+    if (
+      nextLevel &&
+      parseInt(saosp || 0) >= cumulativeSao &&
+      parseInt(sgosp || 0) >= cumulativeSgo
+    ) {
+      result.push(nextLevel); // Only return next eligible level
+    }
+
+    return result;
+  })();
+
 
   return (
     <div className="p-4 max-w-xl mx-auto space-y-6">

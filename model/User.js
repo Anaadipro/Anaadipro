@@ -82,9 +82,9 @@ const UserSchema = new Schema(
     nomineeiaadharno: { type: String },
     password: { type: String, required: true },
     status: { type: String, enum: ["0", "1"], default: "0", required: true },
-    usertype: { type: String, enum: ["0", "1", "2"], default: "0", required: true },
     activesp: { type: String },
     activedate: { type: Date },
+    usertype: { type: String, enum: ["0", "1", "2"], default: "0", required: true },
     defaultdata: { type: String, required: true, default: "user" },
   },
   { timestamps: true }

@@ -22,13 +22,13 @@ export async function POST(req) {
                 { status: 400 }
             );
         }
-        const referrerExists = await UserModel.findOne({ dscode: data.pdscode }).lean();
-        if (!referrerExists) {
-            return new Response(
-                JSON.stringify({ success: false, message: "Invalid referral code!" }),
-                { status: 400 }
-            );
-        }
+            const referrerExists = await UserModel.findOne({ dscode: data.pdscode }).lean();
+            if (!referrerExists) {
+                return new Response(
+                    JSON.stringify({ success: false, message: "Invalid referral code!" }),
+                    { status: 400 }
+                );
+            }
         const plainPassword = data.password;
         const hashedPassword = await bcrypt.hash(data.password, 10);
 

@@ -43,7 +43,7 @@ export default function UserProfile() {
     try {
       await axios.delete(`/api/user/delete/${decodedId}`);
       setSuccess("User deleted successfully.");
-
+      await axios.delete(`/api/kyc/delete/${userData.dscode}`);
       // Redirect after deletion
       setTimeout(() => {
         router.push("/superadmin/Userprofile/user"); // Redirect after deletion

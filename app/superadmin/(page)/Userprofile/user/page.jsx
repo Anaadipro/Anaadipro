@@ -50,7 +50,7 @@ export default function Page() {
     return (
         <div className="p-4 sm:p-6 max-w-6xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 text-center mb-4 sm:mb-6">
-                User List
+               All User List
             </h2>
             <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <input
@@ -96,9 +96,9 @@ export default function Page() {
                                 <th className="py-3 px-4">Name</th>
                                 <th className="py-3 px-4">Email</th>
                                 <th className="py-3 px-4">Group</th>
-                                <th className="py-3 px-4">SAO Sp</th>
-                                <th className="py-3 px-4">SGO Sp</th>
-                                <th className="py-3 px-4">Total Sp</th>
+                                <th className="py-3 px-4">Curent Level</th>
+                                <th className="py-3 px-4">Active Sp</th>
+                                <th className="py-3 px-4">Kyc Status</th>
                                 <th className="py-3 px-4">Status</th>
                                 <th className="py-3 px-4"></th>
                             </tr>
@@ -117,9 +117,9 @@ export default function Page() {
                                             <td className="py-3 px-4 text-gray-700 dark:text-gray-200">{user.name}</td>
                                             <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.email}</td>
                                             <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.group}</td>
-                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.saosp}</td>
-                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.sgosp}</td>
-                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.earnsp}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.level || "N/A"}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.activesp || "N/A"}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.kycVerification.isVerified ? "Verified" : "Not Verified"}</td>
                                             <td
                                                 className={`py-3 px-4 font-medium ${user.usertype === "1" ? "text-indigo-600 dark:text-sky-400" : "text-red-600 dark:text-red-500"
                                                     }`}

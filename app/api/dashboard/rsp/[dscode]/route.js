@@ -26,13 +26,10 @@ export async function GET(request, { params }) {
             }
         }
 
-        // Fetch the oldest order ID once
-        const oldestOrder = await OrderModel.findOne({ dscode }).sort({ createdAt: 1 }).select("_id").lean();
-        if (oldestOrder) {
-            baseFilter._id = { $ne: oldestOrder._id };
-        }
+        // Fetch all self orders
+        const selfOrders = await OrderModel.find({ dscode, status: true }).lean();
 
-        // Flatten team fetching
+        // Build team hierarchy
         const allUsers = await UserModel.find({}).select("dscode pdscode").lean();
         const userMap = new Map();
         allUsers.forEach(user => {
@@ -50,96 +47,92 @@ export async function GET(request, { params }) {
         }
 
         const teamDSCodes = Array.from(collectTeamCodes(dscode));
-        const teamFilter = {
-            dscode: { $in: teamDSCodes },
-            status: true,
-            ...(oldestOrder && { _id: { $ne: oldestOrder._id } }),
-        };
+        const teamOrders = await OrderModel.find({ dscode: { $in: teamDSCodes }, status: true }).lean();
 
-        // Aggregations
-        const [individual, team] = await Promise.all([
-            OrderModel.aggregate([
-                { $match: baseFilter },
-                {
-                    $facet: {
-                        total: [
-                            {
-                                $group: {
-                                    _id: null,
-                                    totalOrders: { $sum: 1 },
-                                    totalsp: { $sum: { $toDouble: "$totalsp" } }
-                                }
-                            }
-                        ],
-                        currentWeek: [
-                            {
-                                $match: {
-                                    createdAt: { $gte: weekStart, $lte: weekEnd }
-                                }
-                            },
-                            {
-                                $group: {
-                                    _id: null,
-                                    currentWeekOrders: { $sum: 1 },
-                                    currentWeekTotal: { $sum: { $toDouble: "$totalsp" } }
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]),
-            OrderModel.aggregate([
-                { $match: teamFilter },
-                {
-                    $facet: {
-                        total: [
-                            {
-                                $group: {
-                                    _id: null,
-                                    totalOrders: { $sum: 1 },
-                                    totalsp: { $sum: { $toDouble: "$totalsp" } }
-                                }
-                            }
-                        ],
-                        currentWeek: [
-                            {
-                                $match: {
-                                    createdAt: { $gte: weekStart, $lte: weekEnd }
-                                }
-                            },
-                            {
-                                $group: {
-                                    _id: null,
-                                    currentWeekOrders: { $sum: 1 },
-                                    currentWeekTotal: { $sum: { $toDouble: "$totalsp" } }
-                                }
-                            }
-                        ]
-                    }
-                }
-            ])
-        ]);
+        // === CALCULATIONS ===
 
-        const indTotal = individual[0]?.total[0] || {};
-        const indWeek = individual[0]?.currentWeek[0] || {};
-        const teamTotal = team[0]?.total[0] || {};
-        const teamWeek = team[0]?.currentWeek[0] || {};
-
-        return Response.json(
-            {
-                success: true,
-                totalOrders: indTotal.totalOrders || 0,
-                totalsp: indTotal.totalsp || 0,
-                currentWeekOrders: indWeek.currentWeekOrders || 0,
-                currentWeekTotal: indWeek.currentWeekTotal || 0,
-
-                teamTotalOrders: teamTotal.totalOrders || 0,
-                teamTotalsp: teamTotal.totalsp || 0,
-                teamCurrentWeekOrders: teamWeek.currentWeekOrders || 0,
-                teamCurrentWeekTotal: teamWeek.currentWeekTotal || 0
-            },
-            { status: 200 }
+        // Total & Weekly self
+        const selfTotalOrders = selfOrders.length;
+        const selfTotalsp = selfOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+        const selfWeekOrders = selfOrders.filter(o =>
+            moment(o.createdAt).isBetween(weekStart, weekEnd, null, "[]")
         );
+        const selfCurrentWeekOrders = selfWeekOrders.length;
+        const selfCurrentWeekTotal = selfWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+
+        // SAOSP & SGOSP of self for current week
+        const selfweeksaosp = selfWeekOrders
+            .filter(o => o.salegroup === "SAO")
+            .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+        const selfweeksgosp = selfWeekOrders
+            .filter(o => o.salegroup === "SGO")
+            .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+
+        // RSP Helper (remove lowest orderNo)
+        function getRSP(orders) {
+            if (orders.length <= 1) return 0;
+            const minOrderNo = Math.min(...orders.map(o => parseInt(o.orderNo || "0")));
+            return orders
+                .filter(o => parseInt(o.orderNo || "0") !== minOrderNo)
+                .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+        }
+
+        function getTeamRSP(orders, weekOnly = false) {
+            const userMap = new Map();
+            for (const order of orders) {
+                if (weekOnly && !moment(order.createdAt).isBetween(weekStart, weekEnd, null, "[]")) continue;
+
+                if (!userMap.has(order.dscode)) userMap.set(order.dscode, []);
+                userMap.get(order.dscode).push(order);
+            }
+
+            let total = 0;
+            for (const orders of userMap.values()) {
+                if (orders.length <= 1) continue;
+                const minOrderNo = Math.min(...orders.map(o => parseInt(o.orderNo || "0")));
+                total += orders
+                    .filter(o => parseInt(o.orderNo || "0") !== minOrderNo)
+                    .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+            }
+            return total;
+        }
+
+        const selfRSPAll = getRSP(selfOrders);
+        const selfRSPWeek = getRSP(selfWeekOrders);
+
+        const teamRSPAll = getTeamRSP(teamOrders);
+        const teamRSPWeek = getTeamRSP(teamOrders, true);
+
+        // Team Total & Weekly
+        const teamTotalOrders = teamOrders.length;
+        const teamTotalsp = teamOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+        const teamWeekOrders = teamOrders.filter(o =>
+            moment(o.createdAt).isBetween(weekStart, weekEnd, null, "[]")
+        );
+        const teamCurrentWeekOrders = teamWeekOrders.length;
+        const teamCurrentWeekTotal = teamWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+
+        return Response.json({
+            success: true,
+
+            // Self stats
+            totalOrders: selfTotalOrders,
+            totalsp: selfTotalsp,
+            currentWeekOrders: selfCurrentWeekOrders,
+            currentWeekTotal: selfCurrentWeekTotal,
+            selfweeksaosp,
+            selfweeksgosp,
+            selfRSPAll,
+            selfRSPWeek,
+
+            // Team stats
+            teamTotalOrders,
+            teamTotalsp,
+            teamCurrentWeekOrders,
+            teamCurrentWeekTotal,
+            teamRSPAll,
+            teamRSPWeek
+        });
     } catch (error) {
         console.error("Error fetching data:", error);
         return Response.json({ message: "Error fetching data!", success: false }, { status: 500 });

@@ -10,7 +10,6 @@ export default function page() {
   return (
     <>
       <Header />
-      {/* Hero Section */}
       <section
         className="relative h-[350px] sm:h-[450px] lg:h-[550px] flex items-center justify-center bg-cover bg-center text-white"
         style={{ backgroundImage: "url('/images/homepage/aboutbg.jpg')" }}

@@ -9,7 +9,13 @@ export default function AddProductPage() {
     group: "",
     dp: "",
     sp: "",
-    mrp: ""
+    mrp: "",
+
+    hsn: "",
+    taxvalue: "",
+    cgst: "",
+    sgst: "",
+    igst: ""
   });
 
   const [productGroups, setProductGroups] = useState([]);
@@ -61,7 +67,14 @@ export default function AddProductPage() {
       formData.group.trim() &&
       formData.dp.trim() &&
       formData.sp.trim() &&
-      formData.mrp.trim()
+      formData.mrp.trim() &&
+
+      formData.hsn.trim() &&
+      formData.taxvalue.trim() &&
+      formData.igst.trim()
+
+
+
     );
   };
 
@@ -75,7 +88,13 @@ export default function AddProductPage() {
     try {
       const response = await axios.post("/api/Product/Product/create", formData);
       setSuccess(response.data.message || "Product added successfully.");
-      setFormData({ image: "", productname: "", sp: "", mrp: "", group: "", dp: "" });
+      setFormData({
+        image: "", productname: "", sp: "", mrp: "", group: "", dp: "", hsn: "",
+        taxvalue: "",
+        cgst: "",
+        sgst: "",
+        igst: ""
+      });
     } catch (error) {
       setError(error.response?.data?.message || "Failed to add product.");
     } finally {
@@ -97,7 +116,15 @@ export default function AddProductPage() {
         </select>
         <input type="number" name="sp" placeholder="Sp" value={formData.sp} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
         <input type="number" name="dp" placeholder="Discount Price" value={formData.dp} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
-        <input type="number" name="mrp" placeholder="Market Price" value={formData.mrp} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+        <input type="number" name="mrp" placeholder="Market Price" min={0} value={formData.mrp} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+
+        <input type="number" name="hsn" placeholder="HSN Code" min={0} value={formData.hsn} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+        <input type="number" name="taxvalue" placeholder="Tax Value" min={0} value={formData.taxvalue} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+        <input type="number" name="cgst" placeholder="CGST" min={0} value={formData.cgst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
+        <input type="number" name="sgst" placeholder="SGST" min={0} value={formData.sgst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
+        <input type="number" name="igst" placeholder="IGST" min={0} value={formData.igst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+
+
         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
         {uploading && <p className="text-blue-500 text-center">Uploading image...</p>}
         {formData.image && <img src={formData.image} alt="Uploaded Preview" className="w-32 h-32 object-cover rounded mx-auto" />}

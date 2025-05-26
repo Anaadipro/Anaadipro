@@ -25,9 +25,9 @@ export default function Signup() {
         fatherOrHusbandName: "",
         profession: "",
         maritalStatus: "",
-        nomineeName:"",
-        nomineeRelation:"",
-        nomineeDOB:"",
+        nomineeName: "",
+        nomineeRelation: "",
+        nomineeDOB: "",
         address: {
             addressLine1: '',
             addressLine2: '',
@@ -144,12 +144,14 @@ export default function Signup() {
         setIsSubmitting(true);
         try {
             const response = await axios.post("/api/user/create", formData);
+            const dscode = response.data.dscode;
             toast.success(response.data.message);
             setLoginKey({
                 dscode: response.data.dscode,
                 password: response.data.password,
             });
             setShowModal(true);
+            await axios.post("/api/kyc/createsingle", { dscode });
         } catch (error) {
             toast.error(error.response?.data?.message || "Something went wrong");
         } finally {

@@ -4,12 +4,59 @@ import { useSidebar } from '@/app/context/SidebarContext'
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Grid2X2, TrophyIcon, ListCheck, UserCircle, ImageIcon, UsersRound, Medal, FileUser, BookOpenText, NotebookText, KeyRound, MailPlus, Trophy, ScrollText, ChevronDown } from "lucide-react";
+import { Grid2X2, TrophyIcon, Dot, ListCheck, UserCircle, ImageIcon, UsersRound, Medal, FileUser, BookOpenText, NotebookText, KeyRound, MailPlus, Trophy, ScrollText, ChevronDown } from "lucide-react";
 const navItems = [
+    {
+        icon: <Dot />,
+        name: "Admin Panel",
+        path: "/superadmin/panel",
+    },
+
     {
         icon: <Grid2X2 />,
         name: "Dashboard",
         path: "/superadmin/Dashboard",
+    },
+    {
+        icon: <UserCircle />,
+        name: "User Profile",
+        subItems: [
+
+            { name: "Active User ID", path: "/superadmin/Userprofile/activeuser", pro: false },
+            { name: "DeActive User ID", path: "/superadmin/Userprofile/deactiveuser", pro: false },
+            { name: "Susspend User ID", path: "/superadmin/Userprofile/susspenduser", pro: false },
+            { name: "Level Achivers", path: "/superadmin/Userprofile/levelachivers", pro: false },
+            { name: "All User", path: "/superadmin/Userprofile/user", pro: false },
+        ],
+    },
+    {
+        icon: <ListCheck />,
+        name: "Bank Kyc",
+        subItems: [
+            { name: "Pending", path: "/superadmin/BankKyc/pending", pro: false },
+            { name: "Approved", path: "/superadmin/BankKyc/approved", pro: false },
+            { name: "Rejected", path: "/superadmin/BankKyc/rejected", pro: false },
+        ],
+    },
+
+    {
+        icon: <ListCheck />,
+        name: "Pan Card Kyc",
+        subItems: [
+            { name: "Pending", path: "/superadmin/panKyc/pending", pro: false },
+            { name: "Approved", path: "/superadmin/panKyc/approved", pro: false },
+            { name: "Rejected", path: "/superadmin/panKyc/rejected", pro: false },
+        ],
+    },
+
+    {
+        icon: <ListCheck />,
+        name: "Aadhar Kyc",
+        subItems: [
+            { name: "Pending", path: "/superadmin/aadharkyc/pending", pro: false },
+            { name: "Approved", path: "/superadmin/aadharkyc/approved", pro: false },
+            { name: "Rejected", path: "/superadmin/aadharkyc/rejected", pro: false },
+        ],
     },
     {
         icon: <ListCheck />,
@@ -26,18 +73,21 @@ const navItems = [
             { name: "Pending", path: "/superadmin/order/pendingdorder", pro: false },
         ],
     },
-    {
-        icon: <UserCircle />,
-        name: "User Profile",
-        subItems: [
-            { name: "All User", path: "/superadmin/Userprofile/user", pro: false },
-        ],
-    },
+
     {
         icon: <ListCheck />,
-        name: "Payment",
+        name: "Payment History",
         subItems: [
-            { name: "Payment Ledger", path: "/superadmin/Payment", pro: false },
+            { name: "Payment History", path: "/superadmin/Paymenthistory", pro: false },
+        ],
+    },
+
+    {
+        icon: <ListCheck />,
+        name: "Closing",
+        subItems: [
+            { name: "Pair Income Closing", path: "/superadmin/closing/pair", pro: false },
+            { name: "Monthly Closing", path: "/superadmin/closing/monthly", pro: false },
         ],
     },
     {

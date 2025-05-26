@@ -32,8 +32,8 @@ export async function PATCH(req, { params }) {
             }
 
             // Find the user by dscode from the order
-            const user = await UserModel.findOne({ 
-                dscode: updatedOrder.dscode 
+            const user = await UserModel.findOne({
+                dscode: updatedOrder.dscode
             }).session(session);
 
             if (user) {
@@ -44,25 +44,39 @@ export async function PATCH(req, { params }) {
                 const orderTotalSp = parseFloat(updatedOrder.totalsp) || 0;
 
                 if (data.status !== undefined) {
-                    if (data.status === true) {
-                        currentEarnsp += orderTotalSp;
-                        if (updatedOrder.salegroup === "SAO") {
-                            currentSaosp += orderTotalSp;
-                        } else if (updatedOrder.salegroup === "SGO") {
-                            currentSgosp += orderTotalSp;
-                        }
-                    } else if (data.status === false) {
+                    if (data.cancelled === true) {
+                        // Cancelled: reverse SP
                         currentEarnsp -= orderTotalSp;
                         if (updatedOrder.salegroup === "SAO") {
                             currentSaosp -= orderTotalSp;
                         } else if (updatedOrder.salegroup === "SGO") {
                             currentSgosp -= orderTotalSp;
                         }
-                        // Ensure values don't go below 0
+                        // Prevent negative values
                         currentEarnsp = Math.max(currentEarnsp, 0);
                         currentSaosp = Math.max(currentSaosp, 0);
                         currentSgosp = Math.max(currentSgosp, 0);
+                    } else if (data.status !== undefined) {
+                        if (data.status === true) {
+                            currentEarnsp += orderTotalSp;
+                            if (updatedOrder.salegroup === "SAO") {
+                                currentSaosp += orderTotalSp;
+                            } else if (updatedOrder.salegroup === "SGO") {
+                                currentSgosp += orderTotalSp;
+                            }
+                        } else if (data.status === false) {
+                            currentEarnsp -= orderTotalSp;
+                            if (updatedOrder.salegroup === "SAO") {
+                                currentSaosp -= orderTotalSp;
+                            } else if (updatedOrder.salegroup === "SGO") {
+                                currentSgosp -= orderTotalSp;
+                            }
+                            currentEarnsp = Math.max(currentEarnsp, 0);
+                            currentSaosp = Math.max(currentSaosp, 0);
+                            currentSgosp = Math.max(currentSgosp, 0);
+                        }
                     }
+
 
                     // Update user SP values
                     await UserModel.updateOne(
@@ -76,30 +90,7 @@ export async function PATCH(req, { params }) {
                     );
 
                     // ----- 💸 Handle WalletDetails for 100 SP matching -----
-                    const lastMatchedSP = parseInt(user.lastMatchedSP || "0", 10);
-                    const newMinSP = Math.min(currentSaosp, currentSgosp);
-                    const matchedSPs = Math.floor(newMinSP / 100) * 100;
-                    const newMatches = Math.floor((matchedSPs - lastMatchedSP) / 100);
 
-                    if (newMatches > 0) {
-                        const today = new Date().toISOString().split("T")[0];
-
-                        const newWalletEntries = Array.from({ length: newMatches }).map(() => ({
-                            salecommission: "1000",
-                            salesgrowth: "",
-                            performance: "",
-                            date: today
-                        }));
-
-                        await UserModel.updateOne(
-                            { dscode: updatedOrder.dscode },
-                            {
-                                $push: { WalletDetails: { $each: newWalletEntries } },
-                                lastMatchedSP: matchedSPs.toString()
-                            },
-                            { session }
-                        );
-                    }
                     // -------------------------------------------------------
                 }
             }

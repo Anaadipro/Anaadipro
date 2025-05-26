@@ -98,9 +98,9 @@ export default function Page() {
                                     <th className="px-4 py-3">Name</th>
                                     <th className="px-4 py-3">Email</th>
                                     <th className="px-4 py-3">Group</th>
-                                    <th className="px-4 py-3">SAO Sp</th>
-                                    <th className="px-4 py-3">SGO Sp</th>
-                                    <th className="px-4 py-3">Total Sp</th>
+                                    <th className="py-3 px-4">Curent Level</th>
+                                    <th className="py-3 px-4">Active Sp</th>
+                                    <th className="py-3 px-4">Kyc Status</th>
                                     <th className="px-4 py-3">Status</th>
                                     <th className="px-4 py-3">Register Date</th>
                                     <th className="px-4 py-3">Activate Date</th>
@@ -119,9 +119,9 @@ export default function Page() {
                                             <td className="px-4 py-3">{user.name}</td>
                                             <td className="px-4 py-3">{user.email}</td>
                                             <td className="px-4 py-3">{user.group}</td>
-                                            <td className="px-4 py-3">{user.saosp}</td>
-                                            <td className="px-4 py-3">{user.sgosp}</td>
-                                            <td className="px-4 py-3">{user.earnsp}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.level || "N/A"}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.activesp || "N/A"}</td>
+                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.kycVerification.isVerified ? "Verified" : "Not Verified"}</td>
                                             <td
                                                 className={`px-4 py-3 font-semibold ${user.usertype === "1" ? "text-green-600" : "text-red-600"
                                                     }`}
@@ -147,7 +147,7 @@ export default function Page() {
                                         </tr>
                                         <tr className="bg-gray-100 dark:bg-gray-800">
                                             <td colSpan="10" className="px-4 pb-2 text-right space-x-2">
-                                            
+
                                                 <Link
                                                     href={`/superadmin/Report/allreport/${user.dscode}`}
                                                     className="text-blue-500 font-semibold underline"

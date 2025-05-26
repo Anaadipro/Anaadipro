@@ -5,11 +5,8 @@ export async function GET(request) {
   await dbConnect();
 
   try {
-
     const url = new URL(request.url);
     const ds = url.pathname.split("/").pop();
-    const usertype = url.searchParams.get("usertype");
-    const dscode = url.searchParams.get("dscode");
     if (!ds) {
       return Response.json(
         {
@@ -19,7 +16,6 @@ export async function GET(request) {
         { status: 400 }
       );
     }
-
 
     const mainUser = await UserModel.findOne({ dscode: ds });
     if (!mainUser) {
@@ -32,17 +28,20 @@ export async function GET(request) {
       );
     }
 
-    // Find two related users sorted by createdAt (oldest first)
-    const relatedUsers = await UserModel.find({ pdscode: ds })
-      .sort({ createdAt: 1 }) // Ascending order (oldest first)
+    // Find 2 users from each group (SAO and SGO)
+    const saoUsers = await UserModel.find({ pdscode: ds, group: "SAO" })
+      .sort({ createdAt: 1 })
       .limit(2);
 
-    // Return the response with separate fields
+    const sgoUsers = await UserModel.find({ pdscode: ds, group: "SGO" })
+      .sort({ createdAt: 1 })
+      .limit(2);
+
     return Response.json(
       {
         success: true,
-        mainUser, // Separate main user
-        relatedUsers, // Array of related users
+        mainUser,
+        relatedUsers: [...saoUsers, ...sgoUsers],
       },
       { status: 200 }
     );
