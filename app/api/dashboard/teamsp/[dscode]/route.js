@@ -97,16 +97,18 @@ export async function GET(request) {
 
       // Accumulate ALL SP (earnsp + saosp + sgosp) into the direct child group bucket
       fullGroup.forEach(u => {
-        totalEarnSP += parseFloat(u.earnsp) || 0;
+        if (u.usertype !== "0") {
+          totalEarnSP += parseFloat(u.earnsp) || 0;
 
-        const totalUserSP =
-          (parseFloat(u.saosp) || 0) +
-          (parseFloat(u.sgosp) || 0);
+          const totalUserSP =
+            (parseFloat(u.saosp) || 0) +
+            (parseFloat(u.sgosp) || 0);
 
-        if (isSAO) {
-          totalSaoSP += totalUserSP;
-        } else if (isSGO) {
-          totalSgoSP += totalUserSP;
+          if (isSAO) {
+            totalSaoSP += totalUserSP;
+          } else if (isSGO) {
+            totalSgoSP += totalUserSP;
+          }
         }
       });
     }
