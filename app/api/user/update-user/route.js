@@ -1,6 +1,5 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
-import PaymentHistoryModel from "@/model/PaymentHistory";
 import bcrypt from "bcryptjs";
 
 export async function PATCH(req) {
@@ -30,23 +29,6 @@ export async function PATCH(req) {
 
             const activesp = Number(data.activesp || 0);
 
-            // Add activesp to self's saosp or sgosp based on group
-            if (user.group === "SAO") {
-                data.saosp = (Number(user.saosp || 0) + activesp).toString();
-            } else if (user.group === "SGO") {
-                data.sgosp = (Number(user.sgosp || 0) + activesp).toString();
-            }
-
-            // Create payment history for self
-            await PaymentHistoryModel.create({
-                dsid: user.dscode,
-                dsgroup: user.group,
-                amount: "0",
-                sp: activesp.toString(),
-                group: user.group,
-                type: "update user",
-                referencename: user.name || "",
-            });
         }
 
         // Only hash password if it's changed
@@ -77,7 +59,7 @@ export async function PATCH(req) {
     } catch (error) {
         console.error("User update error:", error);
         return new Response(
-            JSON.stringify({ success: false, message: "Internal server error. Try again later." }),
+            JSON.stringify({ success: false, message: "Internal server error. Try again later. its live now" }),
             { status: 500 }
         );
     }
