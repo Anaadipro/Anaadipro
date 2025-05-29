@@ -118,8 +118,8 @@ export default function Dashboard4({ dscode, fromDate, toDate }) {
                         <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><Star className="text-purple-500" /></div>
                         <p className="text-gray-700 dark:text-white font-semibold">Current Weak</p>
                     </div>
-                    <p className="text-gray-700 dark:text-white font-semibold">SAO SP: <span className="text-blue-800 ms-4">{rspData?.selfweeksaosp || 0}</span></p>
-                    <p className="text-gray-700 dark:text-white font-semibold">SGO SP: <span className="text-blue-800 ms-4">{rspData?.selfweeksgosp || 0}</span></p>
+                    <p className="text-gray-700 dark:text-white font-semibold">SAO SP: <span className="text-blue-800 ms-4">{rspData?.teamweeksaosp || 0}</span></p>
+                    <p className="text-gray-700 dark:text-white font-semibold">SGO SP: <span className="text-blue-800 ms-4">{rspData?.teamweeksgosp || 0}</span></p>
                 </div>
 
 

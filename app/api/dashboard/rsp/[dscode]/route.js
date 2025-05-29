@@ -60,7 +60,7 @@ export async function GET(request, { params }) {
         const selfCurrentWeekOrders = selfWeekOrders.length;
         const selfCurrentWeekTotal = selfWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
 
-        // SAOSP & SGOSP of self for current week
+        // SAOSP & SGOSP - self (current week)
         const selfweeksaosp = selfWeekOrders
             .filter(o => o.salegroup === "SAO")
             .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
@@ -103,7 +103,7 @@ export async function GET(request, { params }) {
         const teamRSPAll = getTeamRSP(teamOrders);
         const teamRSPWeek = getTeamRSP(teamOrders, true);
 
-        // Team Total & Weekly
+        // Team Total & Weekly (includes self)
         const teamTotalOrders = teamOrders.length;
         const teamTotalsp = teamOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
         const teamWeekOrders = teamOrders.filter(o =>
@@ -111,6 +111,14 @@ export async function GET(request, { params }) {
         );
         const teamCurrentWeekOrders = teamWeekOrders.length;
         const teamCurrentWeekTotal = teamWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+
+        // SAOSP & SGOSP - team (includes self, current week)
+        const teamweeksaosp = teamWeekOrders
+            .filter(o => o.salegroup === "SAO")
+            .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+        const teamweeksgosp = teamWeekOrders
+            .filter(o => o.salegroup === "SGO")
+            .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
 
         return Response.json({
             success: true,
@@ -125,13 +133,15 @@ export async function GET(request, { params }) {
             selfRSPAll,
             selfRSPWeek,
 
-            // Team stats
+            // Team stats (includes self)
             teamTotalOrders,
             teamTotalsp,
             teamCurrentWeekOrders,
             teamCurrentWeekTotal,
             teamRSPAll,
-            teamRSPWeek
+            teamRSPWeek,
+            teamweeksaosp,
+            teamweeksgosp
         });
     } catch (error) {
         console.error("Error fetching data:", error);

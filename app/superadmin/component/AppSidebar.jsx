@@ -112,8 +112,8 @@ const navItems = [
         name: "Bonanza",
         subItems: [
             { name: "3 Months Bonanza", path: "/superadmin/Bonanza/3MonthsBonanza", pro: false },
-            { name: "Add Bonanza", path: "/superadmin/Bonanza/add", pro: false },
-            { name: "Bonanza List", path: "/superadmin/Bonanza/all", pro: false },
+            // { name: "Add Bonanza", path: "/superadmin/Bonanza/add", pro: false },
+            // { name: "Bonanza List", path: "/superadmin/Bonanza/all", pro: false },
         ],
     },
     {
