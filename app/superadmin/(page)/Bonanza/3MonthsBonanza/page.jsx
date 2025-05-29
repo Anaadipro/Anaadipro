@@ -1,18 +1,20 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function ThreeMonthsBonanza() {
   const [data, setData] = useState(null);
+  const [levels, setLevels] = useState([]);
   const [form, setForm] = useState({
     title: '',
-    sao: '',
-    sgo: '',
+    levelsData: [],  // Array of { level: string, sao: string, sgo: string }
     datefrom: '',
     dateto: ''
   });
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // Fetch existing bonanza data
   const fetchData = async () => {
     try {
       const res = await fetch('/api/3months/fetch/all');
@@ -27,14 +29,49 @@ export default function ThreeMonthsBonanza() {
     }
   };
 
+  // Fetch levels from API
+  const fetchLevels = async () => {
+    try {
+      const response = await axios.get('/api/level/fetch/level');
+      const fetchedLevels = response.data.data || [];
+
+      // Sort levels by 'sao' ascending if you want less 'sao' to mean less level
+      fetchedLevels.sort((a, b) => Number(a.sao) - Number(b.sao));
+
+      setLevels(fetchedLevels);
+
+      // Initialize form.levelsData with fetched levels (empty sao, sgo values or defaults)
+      setForm((prev) => ({
+        ...prev,
+        levelsData: fetchedLevels.map(lvl => ({
+          level: lvl.level_name,
+          sao: lvl.sao || '',
+          sgo: lvl.sgo || ''
+        }))
+      }));
+    } catch (error) {
+      console.error('Error fetching levels:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchLevels();
   }, []);
 
+  // Handle change on title, datefrom, dateto inputs
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Handle change on dynamic levels' sao and sgo inputs
+  const handleLevelChange = (index, field, value) => {
+    const updatedLevels = [...form.levelsData];
+    updatedLevels[index][field] = value;
+    setForm({ ...form, levelsData: updatedLevels });
+  };
+
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -42,12 +79,26 @@ export default function ThreeMonthsBonanza() {
       const res = await fetch('/api/3months/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          title: form.title,
+          levels: form.levelsData,
+          datefrom: form.datefrom,
+          dateto: form.dateto
+        }),
       });
       const json = await res.json();
       if (json.success) {
         fetchData();
-        setForm({ title: '', sao: '', sgo: '', datefrom: '', dateto: '' });
+        setForm({
+          title: '',
+          levelsData: levels.map(lvl => ({
+            level: lvl.level_name,
+            sao: lvl.sao || '',
+            sgo: lvl.sgo || ''
+          })),
+          datefrom: '',
+          dateto: ''
+        });
       }
     } catch (err) {
       console.error('Submit error:', err);
@@ -70,27 +121,10 @@ export default function ThreeMonthsBonanza() {
       console.error('Delete error:', err);
     }
   };
-  const formatDateRange = (from, to) => {
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
 
-    const sameYear = fromDate.getFullYear() === toDate.getFullYear();
-    const sameMonth = fromDate.getMonth() === toDate.getMonth();
-
-    const options = { day: '2-digit', month: 'short' };
-    const fromStr = fromDate.toLocaleDateString('en-GB', options);
-    const toStr = toDate.toLocaleDateString('en-GB', options);
-    const year = toDate.getFullYear();
-
-    if (sameMonth) {
-      return `${fromDate.getDate()} to ${toStr} ${year}`;
-    }
-
-    return `${fromStr} to ${toStr} ${year}`;
-  };
   return (
     <div className="max-w-2xl mx-auto p-8 mt-10 bg-gradient-to-br from-pink-100 via-orange-100 to-yellow-100 shadow-xl border border-orange-300">
-      <h2 className="text-4xl font-extrabold  mb-8 text-orange-800">
+      <h2 className="text-4xl font-extrabold mb-8 text-orange-800">
         🎉 3 Months Bonanza
       </h2>
 
@@ -101,8 +135,12 @@ export default function ThreeMonthsBonanza() {
       ) : data ? (
         <div className="text-center space-y-4 text-lg text-gray-700 font-medium">
           <p><strong>Title:</strong> {data.title}</p>
-          <p><strong>SAO:</strong> {data.sao}</p>
-          <p><strong>SGO:</strong> {data.sgo}</p>
+          {/* Show all levels with their sao and sgo */}
+          {data.levels.map((lvl, idx) => (
+            <p key={idx}>
+              <strong>Level {lvl.level} - SAO:</strong> {lvl.sao} | <strong>SGO:</strong> {lvl.sgo}
+            </p>
+          ))}
           <p><strong>Date From:</strong> {data.datefrom}</p>
           <p><strong>Date To:</strong> {data.dateto}</p>
           <button
@@ -114,21 +152,40 @@ export default function ThreeMonthsBonanza() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {[
-            { name: 'title', placeholder: 'Enter Bonanza Title' },
-            { name: 'sao', placeholder: 'Enter SAO' },
-            { name: 'sgo', placeholder: 'Enter SGO' },
-          ].map((field) => (
-            <input
-              key={field.name}
-              type="text"
-              name={field.name}
-              value={form[field.name]}
-              onChange={handleChange}
-              placeholder={field.placeholder}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-              required
-            />
+          <input
+            type="text"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Enter Bonanza Title"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+            required
+          />
+
+          {/* Dynamically render levels inputs */}
+          {levels.map((lvl, index) => (
+            <div key={lvl.level_name} className="space-y-2 p-4 border rounded-md bg-white">
+              <h4 className="font-semibold text-orange-700">{lvl.level_name}</h4>
+
+              <input
+                type="number"
+                name={`sao-${index}`}
+                value={form.levelsData[index]?.sao || ''}
+                onChange={(e) => handleLevelChange(index, 'sao', e.target.value)}
+                placeholder={`Enter SAO for ${lvl.level_name}`}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+                required
+              />
+              <input
+                type="number"
+                name={`sgo-${index}`}
+                value={form.levelsData[index]?.sgo || ''}
+                onChange={(e) => handleLevelChange(index, 'sgo', e.target.value)}
+                placeholder={`Enter SGO for ${lvl.level_name}`}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+                required
+              />
+            </div>
           ))}
 
           <div className="flex gap-4">

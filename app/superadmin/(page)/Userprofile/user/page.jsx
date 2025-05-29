@@ -98,7 +98,6 @@ export default function Page() {
                                 <th className="py-3 px-4">Group</th>
                                 <th className="py-3 px-4">Curent Level</th>
                                 <th className="py-3 px-4">Active Sp</th>
-                                <th className="py-3 px-4">Kyc Status</th>
                                 <th className="py-3 px-4">Status</th>
                                 <th className="py-3 px-4"></th>
                             </tr>
@@ -119,7 +118,6 @@ export default function Page() {
                                             <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.group}</td>
                                             <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.level || "N/A"}</td>
                                             <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.activesp || "N/A"}</td>
-                                            <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{user.kycVerification.isVerified ? "Verified" : "Not Verified"}</td>
                                             <td
                                                 className={`py-3 px-4 font-medium ${user.usertype === "1" ? "text-indigo-600 dark:text-sky-400" : "text-red-600 dark:text-red-500"
                                                     }`}

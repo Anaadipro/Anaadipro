@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import axios from "axios";
 import { signOut } from "next-auth/react";
 import toast, { Toaster } from "react-hot-toast";
@@ -10,8 +10,11 @@ export default function Active({ userData }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false); // ✅ New loading state
 
-  const earnsp = Number(userData.saosp || 0) + Number(userData.sgosp || 0);
+   const [saosp, setSaosp] = useState(0);
+  const [sgosp, setSgosp] = useState(0);
 
+  // Calculate earnsp from fetched states
+  const earnsp = saosp + sgosp;
   const getOptions = () => {
     const options = [];
     if (earnsp >= 25) options.push(25);
@@ -19,6 +22,31 @@ export default function Active({ userData }) {
     if (earnsp >= 100) options.push(100);
     return options;
   };
+
+   useEffect(() => {
+    if (!userData.dscode) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      setErrorMessage(""); // fix: use setErrorMessage here, not setError
+      
+      try {
+        const [teamResponse] = await Promise.all([
+          axios.get(`/api/dashboard/teamsp/${userData.dscode}`),
+        ]);
+
+        setSaosp(parseFloat(teamResponse.data.totalSaoSP || 0));
+        setSgosp(parseFloat(teamResponse.data.totalSgoSP || 0));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setErrorMessage("Failed to load data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userData.dscode]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
