@@ -9,6 +9,7 @@ export default function BankDetails() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: session } = useSession();
     const [data, setData] = useState(null);
+    const [kyc, setKyc] = useState();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -21,6 +22,8 @@ export default function BankDetails() {
     useEffect(() => {
         const fetchUserData = async () => {
             if (!session?.user?.email) return;
+            setFetching(true);
+            setLoading(true);
             try {
                 const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
                 if (response.data) {
@@ -29,11 +32,21 @@ export default function BankDetails() {
                     setAcnumber(response.data.acnumber || "");
                     setIfscCode(response.data.ifscCode || "");
                     setBankimage(response.data.bankimage || "");
+
+                    const dscode = response.data.dscode;
+
+                    if (dscode) {
+                        // Fetch KYC details using dscode
+                        const kycResponse = await axios.get(`/api/kyc/fetchsingle/${dscode}`);
+                        // Attach KYC details to state, e.g., add kyc property to data
+                        setKyc(kycResponse.data.data);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch user data:", error);
             } finally {
                 setFetching(false);
+                setLoading(false);
             }
         };
         fetchUserData();
@@ -75,6 +88,25 @@ export default function BankDetails() {
     return (
         <>
             <div className="rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
+                {fetching ? (
+                    <p className="text-gray-400">Loading KYC status...</p>
+                ) : kyc ? (
+                    <p>
+                        {kyc.rejectedbank ? (
+                            <span className="text-red-600 font-semibold">Rejected</span>
+                        ) : kyc.bankkyc ? (
+                            <span className="text-green-600 font-semibold">Approved</span>
+                        ) : (
+                            <span className="text-yellow-600 font-semibold">Pending</span>
+                        )}
+                    </p>
+                ) : (
+                    <p className="text-gray-500">No KYC data found</p>
+                )}
+
+                {(!kyc?.bankkyc) && (
+                    <p>{kyc?.bankresn}</p>
+                )}
                 <p className="my-4 text-2xl font-light text-gray-700 dark:text-white/90">Bank Details</p>
 
                 {fetching ? (
@@ -150,7 +182,7 @@ export default function BankDetails() {
                             />
                         </div>
 
-                        {!data.kycVerification.isVerified && (
+                        {(!kyc?.bankkyc) && (
                             <div className="mt-4 flex gap-4">
                                 {isEditing ? (
                                     <button
@@ -165,7 +197,8 @@ export default function BankDetails() {
                                         Edit
                                     </button>
                                 )}
-                            </div>)}
+                            </div>
+                        )}
                     </>
                 )}
             </div>

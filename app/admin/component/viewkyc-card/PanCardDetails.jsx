@@ -9,6 +9,7 @@ export default function PanCardDetails() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: session } = useSession();
     const [data, setData] = useState(null);
+    const [kyc, setKyc] = useState();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -19,21 +20,36 @@ export default function PanCardDetails() {
     useEffect(() => {
         const fetchUserData = async () => {
             if (!session?.user?.email) return;
+            setFetching(true);
+            setLoading(true);
             try {
+                // Fetch user data
                 const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
                 if (response.data) {
                     setData(response.data);
                     setPanno(response.data.panno || "");
                     setPanimage(response.data.panimage || "");
+
+                    // Assuming dscode is part of response.data (e.g., response.data.dscode)
+                    const dscode = response.data.dscode;
+
+                    if (dscode) {
+                        // Fetch KYC details using dscode
+                        const kycResponse = await axios.get(`/api/kyc/fetchsingle/${dscode}`);
+                        // Attach KYC details to state, e.g., add kyc property to data
+                        setKyc(kycResponse.data.data);
+                    }
                 }
             } catch (error) {
-                console.error("Failed to fetch user data:", error);
+                console.error("Failed to fetch user or KYC data:", error);
             } finally {
                 setFetching(false);
+                setLoading(false);
             }
         };
         fetchUserData();
     }, [session?.user?.email]);
+
 
     const handleImageUpload = async (file) => {
         setUploading(true);
@@ -69,6 +85,27 @@ export default function PanCardDetails() {
     return (
         <>
             <div className="rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
+                {fetching ? (
+                    <p className="text-gray-400">Loading KYC status...</p>
+                ) : kyc ? (
+                    <p>
+                        {kyc.rejectedpan ? (
+                            <span className="text-red-600 font-semibold">Rejected</span>
+                        ) : kyc.pankkyc ? (
+                            <span className="text-green-600 font-semibold">Approved</span>
+                        ) : (
+                            <span className="text-yellow-600 font-semibold">Pending</span>
+                        )}
+                    </p>
+                ) : (
+                    <p className="text-gray-500">No KYC data found</p>
+                )}
+
+                {(!kyc?.pankkyc) && (
+                    <p>{kyc?.panresn}</p>
+                )}
+
+
                 <p className="my-4 text-2xl font-light text-gray-700 dark:text-white/90">PAN Card</p>
 
                 {fetching ? (
@@ -124,7 +161,7 @@ export default function PanCardDetails() {
                             />
                         </div>
 
-                        {!data.kycVerification.isVerified && (
+                        {(!kyc?.pankkyc) && (
                             <div className="mt-4 flex gap-4">
                                 {isEditing ? (
                                     <button
@@ -139,7 +176,8 @@ export default function PanCardDetails() {
                                         Edit
                                     </button>
                                 )}
-                            </div>)}
+                            </div>
+                        )}
                     </>
                 )}
             </div>
