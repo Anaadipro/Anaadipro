@@ -336,7 +336,7 @@ export default function Page() {
 
       <form onSubmit={handleSubmit} className="space-y-5 bg-white p-4 rounded shadow">
         {/* KYC Verification */}
-        <div>
+        {/* <div>
           <label className="block mb-1 font-medium">KYC Verified</label>
           <select
             className="w-full p-2 border rounded"
@@ -348,7 +348,7 @@ export default function Page() {
             <option value="false">Not Verified</option>
             <option value="true">Verified</option>
           </select>
-        </div>
+        </div> */}
 
 
         <div>

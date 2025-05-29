@@ -9,6 +9,7 @@ export default function UserMetaCard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: session, update } = useSession();
     const [name, setName] = useState("");
+    const [kyc, setKyc] = useState();
     const [image, setImage] = useState(null);
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -23,6 +24,15 @@ export default function UserMetaCard() {
                 if (response.data?.name) {
                     setData(response.data);
                     setName(response.data.name);
+
+                    const dscode = response.data.dscode;
+
+                    if (dscode) {
+                        // Fetch KYC details using dscode
+                        const kycResponse = await axios.get(`/api/kyc/fetchsingle/${dscode}`);
+                        // Attach KYC details to state, e.g., add kyc property to data
+                        setKyc(kycResponse.data.data);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch user name:", error);
@@ -131,15 +141,21 @@ export default function UserMetaCard() {
                                     </h2>
                                 </div>
                                 <div
-                                    className={`px-3 py-1 rounded text-sm font-medium shadow-md ${data?.kycVerification?.isVerified
-                                        ? "bg-green-600 text-white"
-                                        : "bg-red-600 text-white"
+                                    className={`px-3 py-1 rounded text-sm font-medium shadow-md ${kyc?.aadharkkyc
+                                        ? ""
+                                        : ""
                                         }`}
                                 >
-                                    KYC = {data?.kycVerification?.isVerified ? "DONE" : "PENDING"}
+                                    KYC = {kyc?.rejectedaadhar ? (
+                                        <span className="text-red-600 font-semibold">Rejected</span>
+                                    ) : kyc?.aadharkkyc ? (
+                                        <span className="text-green-600 font-semibold">Approved</span>
+                                    ) : (
+                                        <span className="text-yellow-600 font-semibold">Pending</span>
+                                    )}
                                 </div>
 
-                                {data?.kycVerification?.isVerified && data?.usertype !== "1" && (
+                                {kyc?.aadharkkyc && data?.usertype !== "1" && (
                                     <button
                                         onClick={() => setShowModal(true)}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm font-medium shadow-md"
