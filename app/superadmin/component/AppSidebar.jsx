@@ -104,6 +104,7 @@ const navItems = [
         subItems: [
             { name: "Add Level", path: "/superadmin/Level/add", pro: false },
             { name: "All Level", path: "/superadmin/Level/all", pro: false },
+            { name: "Update User", path: "/superadmin/Level/updateuser", pro: false },
         ],
     },
 

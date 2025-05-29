@@ -317,14 +317,7 @@ export default function Page() {
         <p className="font-semibold">
           Current Level: <span className="text-blue-600">{userData?.level || "N/A"}</span>
         </p>
-        <p className="font-semibold">
-          KYC Status:{" "}
-          <span
-            className={userData?.kycVerification?.isVerified ? "text-blue-600" : "text-red-600"}
-          >
-            {userData?.kycVerification?.isVerified ? "Verified" : "Not Verified"}
-          </span>
-        </p>
+        
 
         <p>
           SAO Score: <span className="text-green-600 font-semibold">{saosp || 0}</span>
