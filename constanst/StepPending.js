@@ -17,6 +17,7 @@ const steppending = [
     { id: 16, sao: 12288000, sgo: 6144000 },
     { id: 17, sao: 24576000, sgo: 12288000 },
     { id: 18, sao: 49152000, sgo: 24576000 },
+    
 ];
 
 export default steppending;
