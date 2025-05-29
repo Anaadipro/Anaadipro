@@ -11,6 +11,7 @@ export default function Signup() {
     const [showModal, setShowModal] = useState(false);
     const [step, setStep] = useState(2);
     const [checkboxes, setCheckboxes] = useState(Array(6).fill(false));
+    const [image, setImage] = useState(null);
     const [formData, setFormData] = useState({
         email: "",
         otp: "",
@@ -35,7 +36,12 @@ export default function Signup() {
             landmark: '',
             pinCode: '',
             state: '',
-        }
+        },
+
+
+        aadharno: '',
+        aadharimage: '',
+        aadharfullname: '',
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,6 +107,11 @@ export default function Signup() {
             if (!formData.address?.pinCode) newErrors.pinCode = "Please enter Pin Code";
             if (!formData.address?.state) newErrors.state = "Please select State";
 
+            if (!formData.aadharno) newErrors.aadharno = "Please enter aadharno";
+            if (!formData.aadharimage) newErrors.aadharimage = "Please Select aadharimage";
+            if (!formData.aadharfullname) newErrors.aadharfullname = "Please enter Aadhar Full Name";
+
+
             if (!formData.password.trim()) newErrors.password = "Password is required";
             else if (formData.password.length < 6)
                 newErrors.password = "Password must be at least 6 characters";
@@ -138,13 +149,53 @@ export default function Signup() {
         }
     };
 
+
+ const handleImageUpload = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    setIsSubmitting(true);
+    
+    try {
+        const response = await axios.post("/api/upload", formData);
+        setIsSubmitting(false); // ✅ move before return
+        return response.data.file.secure_url;
+    } catch (error) {
+        console.error("Image upload failed:", error);
+        setIsSubmitting(false); // ✅ move before return
+        return null;
+    }
+};
+
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateFields()) return;
+
         setIsSubmitting(true);
+
         try {
-            const response = await axios.post("/api/user/create", formData);
+            let uploadedImageUrl = '';
+
+            // Upload image if selected
+            if (image) {
+                uploadedImageUrl = await handleImageUpload(image);
+                if (!uploadedImageUrl) {
+                    toast.error("Image upload failed.");
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
+            // Include image URL in formData
+            const completeFormData = {
+                ...formData,
+                aadharimage: uploadedImageUrl,
+            };
+
+            const response = await axios.post("/api/user/create", completeFormData);
             const dscode = response.data.dscode;
+
             toast.success(response.data.message);
             setLoginKey({
                 dscode: response.data.dscode,
@@ -423,6 +474,48 @@ export default function Signup() {
                                 </select>
                                 {errors.group && <p className="text-red-500 text-xs">{errors.group}</p>}
                             </div>
+
+
+                            <div className="lg:col-span-1">
+                                <label className="text-gray-700 text-sm font-semibold">Aadhar No</label>
+                                <input type="number" name="aadharno" value={formData.aadharno} onChange={handleChange} placeholder="Aadhar No" className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
+                                {errors.aadharno && <p className="text-red-500 text-xs">{errors.aadharno}</p>}
+                            </div>
+
+
+                            <div className="lg:col-span-1">
+                                <label className="text-gray-700 text-sm font-semibold">Aadhar Full Name</label>
+                                <input type="text" name="aadharfullname" value={formData.aadharfullname} onChange={handleChange} placeholder="Aadhar Full Name" className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
+                                {errors.aadharfullname && <p className="text-red-500 text-xs">{errors.aadharfullname}</p>}
+                            </div>
+
+                            <div className="lg:col-span-1">
+                                <label className="text-gray-700 text-sm font-semibold">Aadhar Image</label>
+
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm"
+                                    onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setImage(file); // optional: keep a local copy if needed
+
+                                            const uploadedUrl = await handleImageUpload(file);
+                                            if (uploadedUrl) {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    aadharimage: uploadedUrl,
+                                                }));
+                                            }
+                                        }
+                                    }}
+                                />
+                                {errors.aadharimage && <p className="text-red-500 text-xs">{errors.aadharimage}</p>}
+                            </div>
+
+
+
                             <div className="lg:col-span-1">
                                 <label className="text-gray-700 text-sm font-semibold">Reference Ds Id.</label>
                                 <input type="text" name="pdscode" value={formData.pdscode} onChange={handleChange} className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />

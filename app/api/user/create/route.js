@@ -15,20 +15,31 @@ export async function POST(req) {
             );
         }
 
-        const alreadyUser = await UserModel.findOne({ email: data.email }).lean();
-        if (alreadyUser) {
+        const existingUser = await UserModel.findOne({
+            $or: [
+                { email: data.email },
+                { mobileNo: data.mobileNo },
+                ...(data.aadharno ? [{ aadharno: data.aadharno }] : [])
+            ]
+        }).lean();
+
+        if (existingUser) {
+            let message = "User already exists with ";
+            if (existingUser.email === data.email) message += "this email!";
+            else if (existingUser.mobileNo === data.mobileNo) message += "this mobile number!";
+            else if (data.aadharno && existingUser.aadharno === data.aadharno) message += "this Aadhar number!";
+            else message = "duplicate credentials.";
+
+            return new Response(JSON.stringify({ success: false, message }), { status: 400 });
+        }
+
+        const referrerExists = await UserModel.findOne({ dscode: data.pdscode }).lean();
+        if (!referrerExists) {
             return new Response(
-                JSON.stringify({ success: false, message: "User already exists with this email!" }),
+                JSON.stringify({ success: false, message: "Invalid referral code!" }),
                 { status: 400 }
             );
         }
-            const referrerExists = await UserModel.findOne({ dscode: data.pdscode }).lean();
-            if (!referrerExists) {
-                return new Response(
-                    JSON.stringify({ success: false, message: "Invalid referral code!" }),
-                    { status: 400 }
-                );
-            }
         const plainPassword = data.password;
         const hashedPassword = await bcrypt.hash(data.password, 10);
 
