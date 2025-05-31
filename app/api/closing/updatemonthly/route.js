@@ -1,40 +1,45 @@
+
+import { NextResponse } from 'next/server';
 import dbConnect from "@/lib/dbConnect";
-import MonthlyClosingHistoryModel from "@/model/MonthleClosingHistory";
-export const PATCH = async (req) => {
-  await dbConnect();
+import MonthlyClosingHistoryModel from '@/model/MonthleClosingHistory';
 
+export async function PATCH(request) {
   try {
-    const body = await req.json();
-    const { ids } = body;
+    const body = await request.json();
 
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return Response.json(
-        { message: "No valid IDs provided", success: false },
+    const { id, updateData } = body;
+
+    if (!id || !updateData) {
+      return NextResponse.json(
+        { success: false, message: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    console.log("Updating these IDs:", ids); // Debug log
+    // Connect to database (implement your own connectToDB function)
+    await dbConnect();
 
-    const result = await MonthlyClosingHistoryModel.updateMany(
-      { _id: { $in: ids } },
-      { $set: { status: true } }
-    );
+    const updated = await MonthlyClosingHistoryModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
 
-    console.log("Update Result:", result); // Debug log
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, message: 'Pair not found' },
+        { status: 404 }
+      );
+    }
 
-    return Response.json(
-      {
-        message: `${result.modifiedCount} record(s) updated successfully.`,
-        success: true,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: 'Closing pair updated successfully',
+      data: updated,
+    });
   } catch (error) {
-    console.error("Update error:", error);
-    return Response.json(
-      { message: "Failed to update records", success: false },
+    console.error('PATCH /api/closing/updatepair error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error', error: error.message },
       { status: 500 }
     );
   }
-};
+}

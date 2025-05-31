@@ -1,5 +1,5 @@
 import dbConnect from "@/lib/dbConnect";
-import ClosingHistoryModel from "@/model/ClosingHistory";
+import MonthlyClosingHistoryModel from "@/model/MonthleClosingHistory";
 
 export const GET = async (request) => {
   await dbConnect();
@@ -11,8 +11,7 @@ export const GET = async (request) => {
   const date = searchParams.get("date");
 
   const filter = {
-    invalidstatus: false,
-    status: false,
+    invalidstatus: true,
   };
 
   // Optional: Filter by dscode
@@ -27,12 +26,12 @@ export const GET = async (request) => {
   }
 
   try {
-    const data = await ClosingHistoryModel.find(filter)
+    const data = await MonthlyClosingHistoryModel.find(filter)
       .sort({ createdAt: -1 }) // latest first
       .skip((page - 1) * limit)
       .limit(limit);
 
-    const total = await ClosingHistoryModel.countDocuments(filter);
+    const total = await MonthlyClosingHistoryModel.countDocuments(filter);
 
     return Response.json(
       {

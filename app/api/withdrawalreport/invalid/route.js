@@ -11,8 +11,7 @@ export const GET = async (request) => {
   const date = searchParams.get("date");
 
   const filter = {
-    invalidstatus: false,
-    status: false,
+    invalidstatus: true,
   };
 
   // Optional: Filter by dscode

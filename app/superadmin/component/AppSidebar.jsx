@@ -4,21 +4,21 @@ import { useSidebar } from '@/app/context/SidebarContext'
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Grid2X2, TrophyIcon, Dot, ListCheck, UserCircle, ImageIcon, UsersRound, Medal, FileUser, BookOpenText, NotebookText, KeyRound, MailPlus, Trophy, ScrollText, ChevronDown } from "lucide-react";
+import { Folder, ChevronDown } from "lucide-react";
 const navItems = [
     {
-        icon: <Dot />,
+        icon: <Folder />,
         name: "Admin Panel",
         path: "/superadmin/panel",
     },
 
     {
-        icon: <Grid2X2 />,
+        icon: <Folder />,
         name: "Dashboard",
         path: "/superadmin/Dashboard",
     },
     {
-        icon: <UserCircle />,
+        icon: <Folder />,
         name: "User Profile",
         subItems: [
 
@@ -30,7 +30,7 @@ const navItems = [
         ],
     },
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Bank Kyc",
         subItems: [
             { name: "Pending", path: "/superadmin/BankKyc/pending", pro: false },
@@ -40,7 +40,7 @@ const navItems = [
     },
 
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Pan Card Kyc",
         subItems: [
             { name: "Pending", path: "/superadmin/panKyc/pending", pro: false },
@@ -50,7 +50,7 @@ const navItems = [
     },
 
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Aadhar Kyc",
         subItems: [
             { name: "Pending", path: "/superadmin/aadharkyc/pending", pro: false },
@@ -59,14 +59,14 @@ const navItems = [
         ],
     },
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Report",
         subItems: [
             { name: "UserReport", path: "/superadmin/Report/UserReport", pro: false },
         ],
     },
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Orders",
         subItems: [
             { name: "Approved", path: "/superadmin/order/approvedorder", pro: false },
@@ -75,23 +75,47 @@ const navItems = [
     },
 
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Payment History",
         subItems: [
             { name: "Payment History", path: "/superadmin/Paymenthistory", pro: false },
         ],
     },
 
+
     {
-        icon: <ListCheck />,
+        icon: <Folder />,
         name: "Closing",
         subItems: [
             { name: "Pair Income Closing", path: "/superadmin/closing/pair", pro: false },
             { name: "Monthly Closing", path: "/superadmin/closing/monthly", pro: false },
         ],
     },
+
     {
-        icon: <UsersRound />,
+        icon: <Folder />,
+        name: "Pair Withdrawal",
+        subItems: [
+            { name: "Pending", path: "/superadmin/withdrawal/pending", pro: false },
+            { name: "Success", path: "/superadmin/withdrawal/success", pro: false },
+            { name: "Invalid", path: "/superadmin/withdrawal/invalid", pro: false },
+        ],
+    },
+
+    {
+        icon: <Folder />,
+        name: "Monthly Withdrawal",
+        subItems: [
+            { name: "Pending", path: "/superadmin/withdrawal/month/pending", pro: false },
+            { name: "Success", path: "/superadmin/withdrawal/month/success", pro: false },
+            { name: "Invalid", path: "/superadmin/withdrawal/month/invalid", pro: false },
+        ],
+    },
+
+
+
+    {
+        icon: <Folder />,
         name: "Genealogy",
         subItems: [
             { name: "Sales Team", path: "/superadmin/Genealogy/salesteam", pro: false },
@@ -99,7 +123,7 @@ const navItems = [
         ],
     },
     {
-        icon: <Trophy />,
+        icon: <Folder />,
         name: "Level",
         subItems: [
             { name: "Add Level", path: "/superadmin/Level/add", pro: false },
@@ -109,7 +133,7 @@ const navItems = [
     },
 
     {
-        icon: <Medal />,
+        icon: <Folder />,
         name: "Bonanza",
         subItems: [
             { name: "3 Months Bonanza", path: "/superadmin/Bonanza/3MonthsBonanza", pro: false },
@@ -118,7 +142,7 @@ const navItems = [
         ],
     },
     {
-        icon: <BookOpenText />,
+        icon: <Folder />,
         name: "Product Form",
         subItems: [
             { name: "Product Group", path: "/superadmin/Product/productgroup", pro: false },
@@ -128,7 +152,7 @@ const navItems = [
     },
 
     {
-        icon: <TrophyIcon />,
+        icon: <Folder />,
         name: "Achivers",
         subItems: [
             { name: "Add Achivers", path: "/superadmin/Achivers/add", pro: false },
@@ -137,13 +161,13 @@ const navItems = [
     },
 
     {
-        icon: <ImageIcon />,
+        icon: <Folder />,
         name: "Dashboard Image",
         path: "/superadmin/dashboardimage",
     },
 
     {
-        icon: <KeyRound />,
+        icon: <Folder />,
         name: "Change Password",
         path: "/superadmin/ChangePassword",
     },

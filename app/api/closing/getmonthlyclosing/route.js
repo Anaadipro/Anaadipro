@@ -9,7 +9,10 @@ export const GET = async (request) => {
   const dscode = searchParams.get("dscode");
   const date = searchParams.get("date");
 
-  const filter = {};
+ const filter = {
+    invalidstatus: false,
+    status: false,
+  };
 
   // Optional: Filter by dscode
   if (dscode) filter.dsid = dscode;
