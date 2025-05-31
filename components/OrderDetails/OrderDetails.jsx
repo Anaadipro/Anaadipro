@@ -330,14 +330,19 @@ export default function OrderDetails({ data }) {
                                 <th className="border p-1">Product</th>
                                 <th className="border p-1">HSN</th>
                                 <th className="border p-1">Qty</th>
-                                <th className="border p-1">Rate</th>
+                                <th className="border p-1">DP</th>
+                                <th className="border p-1">MRP</th>
                                 <th className="border p-1">Amount</th>
-                                <th className="border p-1">Taxable</th>
-                                <th className="border p-1">CGST</th>
-                                <th className="border p-1">SGST</th>
-                                <th className="border p-1">IGST</th>
+                                <th className="border p-1">Taxable Amount</th>
+                                <th className="border p-1">
+                                    <div>CGST </div><div><span className=" text-xs">Rate Amount</span></div></th>
+                                <th className="border p-1">
+                                    <div>SGST </div><div><span className=" text-xs">Rate Amount</span></div></th>
+                                <th className="border p-1">
+                                    <div>IGST </div><div><span className=" text-xs">Rate Amount</span></div></th>
+                                <th className="border p-1">Tax Rate</th>
                                 <th className="border p-1">Total SP</th>
-                                <th className="border p-1">Total</th>
+                                <th className="border p-1">Total Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -350,11 +355,15 @@ export default function OrderDetails({ data }) {
                                         <td className="border p-1">{matched?.hsn || "-"}</td>
                                         <td className="border p-1">{product.quantity}</td>
                                         <td className="border p-1">{matched?.dp || "-"}</td>
+                                        <td className="border p-1">{matched?.mrp || "-"}</td>
                                         <td className="border p-1">{matched?.dp ? (matched.dp * product.quantity).toFixed(2) : "-"}</td>
                                         <td className="border p-1">{matched?.taxvalue || "-"}</td>
                                         <td className="border p-1">{matched?.cgst || "-"}</td>
                                         <td className="border p-1">{matched?.sgst || "-"}</td>
                                         <td className="border p-1">{matched?.igst || "-"}</td>
+                                        <td className="border p-1">
+                                            {matched?.igst ? matched.igst.split('(')[0] : "-"}
+                                        </td>
                                         <td className="border p-1">{matched?.sp ? (matched.sp * product.quantity).toFixed(2) : "-"}</td>
                                         <td className="border p-1">{matched?.dp ? (matched.dp * product.quantity).toFixed(2) : "-"}</td>
                                     </tr>
@@ -362,10 +371,12 @@ export default function OrderDetails({ data }) {
                             })}
                             <tr className="font-bold">
                                 <td colSpan={5} className="border p-1 text-center">Total</td>
+                                <td className="border p-1"></td>
                                 <td className="border p-1">{totals.totalDP.toFixed(2)}</td>
                                 <td className="border p-1">{totals.totaltax.toFixed(2)}</td>
                                 <td className="border p-1">{totals.totalCGST.toFixed(2)}</td>
                                 <td className="border p-1">{totals.totalSGST.toFixed(2)}</td>
+                                <td className="border p-1">-</td>
                                 <td className="border p-1">{totals.totalIGST.toFixed(2)}</td>
                                 <td className="border p-1">{totals.totalSP.toFixed(2)}</td>
                                 <td className="border p-1">{totals.totalDP.toFixed(2)}</td>
