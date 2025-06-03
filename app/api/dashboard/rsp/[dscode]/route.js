@@ -30,7 +30,8 @@ export async function GET(request, { params }) {
         const selfOrders = await OrderModel.find({ dscode, status: true }).lean();
 
         // Build team hierarchy
-        const allUsers = await UserModel.find({}).select("dscode pdscode").lean();
+       const allUsers = await UserModel.find({}).select("dscode pdscode group").lean();
+
         const userMap = new Map();
         allUsers.forEach(user => {
             if (!userMap.has(user.pdscode)) userMap.set(user.pdscode, []);
@@ -113,12 +114,54 @@ export async function GET(request, { params }) {
         const teamCurrentWeekTotal = teamWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
 
         // SAOSP & SGOSP - team (includes self, current week)
-        const teamweeksaosp = teamWeekOrders
-            .filter(o => o.salegroup === "SAO")
-            .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
-        const teamweeksgosp = teamWeekOrders
-            .filter(o => o.salegroup === "SGO")
-            .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+       // Map all users: dscode -> user object (with group info)
+const userMapFull = new Map(allUsers.map(u => [u.dscode, u]));
+
+// Get direct downlines
+const directDownlines = allUsers.filter(u => u.pdscode === dscode);
+
+// Map: each user -> their direct SAO/SGO parent under main user
+const userToDirectGroupMap = new Map();
+for (const child of directDownlines) {
+    userToDirectGroupMap.set(child.dscode, child);
+}
+
+function mapToDirectGroup(userCode) {
+    if (userToDirectGroupMap.has(userCode)) return userToDirectGroupMap.get(userCode);
+
+    const visited = new Set();
+    let current = userMapFull.get(userCode);
+    while (current && !visited.has(current.dscode)) {
+        visited.add(current.dscode);
+        const parentCode = current.pdscode;
+        if (!parentCode) break;
+        if (userToDirectGroupMap.has(parentCode)) {
+            const direct = userToDirectGroupMap.get(parentCode);
+            userToDirectGroupMap.set(userCode, direct);
+            return direct;
+        }
+        current = userMapFull.get(parentCode);
+    }
+    return null;
+}
+
+let teamweeksaosp = 0;
+let teamweeksgosp = 0;
+
+for (const order of teamWeekOrders) {
+    const owner = order.dscode;
+
+    if (owner === dscode) {
+        const selfUser = userMapFull.get(dscode);
+        if (selfUser?.group === "SAO") teamweeksaosp += parseFloat(order.totalsp);
+        else if (selfUser?.group === "SGO") teamweeksgosp += parseFloat(order.totalsp);
+    } else {
+        const direct = mapToDirectGroup(owner);
+        if (direct?.group === "SAO") teamweeksaosp += parseFloat(order.totalsp);
+        else if (direct?.group === "SGO") teamweeksgosp += parseFloat(order.totalsp);
+    }
+}
+
 
         return Response.json({
             success: true,

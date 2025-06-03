@@ -2,13 +2,18 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard1 from "@/components/Dashboard/Dashboard1";
 import Dashboard4 from "@/components/Dashboard/Dashboard4";
-import Image from 'next/image';
+import Cookies from 'js-cookie';
 
-export default function page() {
+export default function Page() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    setShowModal(true);
+    const hasSeenModal = Cookies.get('hasSeenModal');
+
+    if (!hasSeenModal) {
+      setShowModal(true);
+      Cookies.set('hasSeenModal', 'true', { expires: 1 }); // expires in 1 day
+    }
   }, []);
 
   return (

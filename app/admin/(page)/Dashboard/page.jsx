@@ -4,14 +4,18 @@ import Dashboard1 from "@/components/Dashboard/Dashboard1";
 import Dashboard3 from "@/components/Dashboard/Dashboard3";
 import Dashboard4 from "@/components/Dashboard/Dashboard4";
 import Image from 'next/image';
-
+import Cookies from 'js-cookie';
 export default function page() {
   const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    setShowModal(true);
-  }, []);
-
+  
+    useEffect(() => {
+      const hasSeenModal = Cookies.get('hasSeenModal');
+  
+      if (!hasSeenModal) {
+        setShowModal(true);
+        Cookies.set('hasSeenModal', 'true', { expires: 1 }); // expires in 1 day
+      }
+    }, []);
   return (
     <>
       {/* <Dashboard2 /> */}

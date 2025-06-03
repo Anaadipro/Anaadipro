@@ -8,6 +8,7 @@ import { LogOut } from 'lucide-react';
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import axios from "axios";
+import Cookies from 'js-cookie';
 
 const AppHeader = () => {
     const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -28,44 +29,44 @@ const AppHeader = () => {
     const toggleApplicationMenu = () => {
         setApplicationMenuOpen(!isApplicationMenuOpen);
     };
-   useEffect(() => {
-    const fetchUserData = async () => {
-        if (!session?.user?.email) {
-            console.log("Session email not found");
-            return;
-        }
-
-        try {
-            const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
-
-            const userData = response.data;
-
-            // Log the fetched user data for debugging
-            console.log("Fetched user data:", userData);
-
-            if (userData?.name) {
-                setImg(userData.image);
-                setUserstatus(userData.defaultdata);
-
-                // Check if the defaultdata is not "user" and log out if so
-                if (userData.defaultdata !== "user") {
-                    console.log("Logging out because userstatus is:", userData.defaultdata);
-                    await signOut({ callbackUrl: "/" });
-                } else {
-                    console.log("User is logged in with defaultdata: user");
-                }
-            } else {
-                console.log("User data is missing the name field");
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (!session?.user?.email) {
+                console.log("Session email not found");
+                return;
             }
-        } catch (error) {
-            console.error("Failed to fetch user data:", error);
-        } finally {
-            setFetching(false);
-        }
-    };
 
-    fetchUserData();
-}, [session?.user?.email]);
+            try {
+                const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
+
+                const userData = response.data;
+
+                // Log the fetched user data for debugging
+                console.log("Fetched user data:", userData);
+
+                if (userData?.name) {
+                    setImg(userData.image);
+                    setUserstatus(userData.defaultdata);
+
+                    // Check if the defaultdata is not "user" and log out if so
+                    if (userData.defaultdata !== "user") {
+                        console.log("Logging out because userstatus is:", userData.defaultdata);
+                        await signOut({ callbackUrl: "/" });
+                    } else {
+                        console.log("User is logged in with defaultdata: user");
+                    }
+                } else {
+                    console.log("User data is missing the name field");
+                }
+            } catch (error) {
+                console.error("Failed to fetch user data:", error);
+            } finally {
+                setFetching(false);
+            }
+        };
+
+        fetchUserData();
+    }, [session?.user?.email]);
 
 
 
@@ -179,7 +180,10 @@ const AppHeader = () => {
                     <div className="flex items-center gap-2 2xsm:gap-3">
                         <ThemeToggleButton />
                         <div
-                            onClick={() => signOut()}
+                            onClick={() => {
+                                Cookies.remove('hasSeenModal'); // clear the modal flag
+                                signOut(); // log the user out
+                            }}
                             className="flex items-center gap-2 p-2 rounded-md cursor-pointer 
                transition-all duration-200 
                bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700"
