@@ -8,14 +8,14 @@ export async function PATCH(req) {
     try {
         const data = await req.json();
 
-        if (!data.email || !data.password) {
+        if (!data.dscode || !data.password) {
             return new Response(
-                JSON.stringify({ success: false, message: "Email and new password are required!" }),
+                JSON.stringify({ success: false, message: "DS code and new password are required!" }),
                 { status: 400 }
             );
         }
 
-        const user = await UserModel.findOne({ email: data.email });
+        const user = await UserModel.findOne({ dscode: data.dscode });
 
         if (!user) {
             return new Response(
@@ -27,7 +27,7 @@ export async function PATCH(req) {
         const hashedPassword = await bcrypt.hash(data.password, 10);
 
         await UserModel.updateOne(
-            { email: data.email },
+            { dscode: data.dscode },
             { $set: { password: hashedPassword } }
         );
 

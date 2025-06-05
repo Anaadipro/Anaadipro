@@ -8,7 +8,7 @@ export default function ChangePasswordPage() {
   // const { data: session, update } = useSession();
   // const email = session?.user?.email || "";
   const [formData, setFormData] = useState({
-    email: "",
+    dscode: "",
     otp: "",
     password: "",
     confirmPassword: "",
@@ -77,12 +77,12 @@ export default function ChangePasswordPage() {
     setIsSubmitting(true);
     try {
       const response = await axios.patch("/api/user/changepasswordbyadmin", {
-        email: formData.email,
+        dscode: formData.dscode,
         password: formData.password,
       });
       toast.success(response.data.message);
       // setStep(1);
-      setFormData({ email: "", otp: "", password: "", confirmPassword: "" });
+      setFormData({ dscode: "", otp: "", password: "", confirmPassword: "" });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update password.");
     } finally {
@@ -152,11 +152,11 @@ export default function ChangePasswordPage() {
         <form onSubmit={handlePasswordUpdate} className="space-y-4">
           <div className="space-y-4">
                <div>
-            <label className="block text-sm font-medium">Email</label>
+            <label className="block text-sm font-medium">Dscode</label>
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="dscode"
+              name="dscode"
+              value={formData.dscode}
               onChange={handleChange}
               className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
               required
