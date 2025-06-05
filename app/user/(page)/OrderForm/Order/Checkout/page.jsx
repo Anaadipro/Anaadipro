@@ -31,7 +31,7 @@ export default function Page() {
         shippingmobile: "",
         shippinpPincode: "",
         paymentmod: "",
-        salegroup: "",
+        salegroup: "SAO",
         productDetails: [{ productgroup: "", product: "", quantity: "" }],
         shippingcharge: "",
         netamount: "",
@@ -249,7 +249,6 @@ export default function Page() {
                             <InputField label="Net Amount" name="netamount" defaultValue={formData.netamount} disabled />
                             <InputField label="Total SP" name="totalsp" defaultValue={formData.totalsp} disabled />
                             <InputField label="Shipping Charge" name="shippingcharge" defaultValue={formData.shippingcharge} disabled />
-                            <SelectField label="Sale Group" name="salegroup" options={["SAO", "SGO"]} value={formData.salegroup} onChange={handleChange} required />
                         </tbody>
                     </table>
 

@@ -228,7 +228,7 @@ export default function OrderDetails({ data }) {
         totals.totalIGST += extractMainValue(matchedProduct.igst);
     });
 
-    const totalDPWords = toWords(Math.round(totals.totalDP));
+    const totalDPWords = toWords(Math.round(data.netamount));
 
     return (
         <>
@@ -440,6 +440,21 @@ export default function OrderDetails({ data }) {
                             <div className="border border-gray-800 p-2">
                                 <span className="font-semibold"> ₹ {totals.totalDP.toFixed(2)}</span>
                             </div>
+
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Shipping Charge</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {data.shippingcharge}</span>
+                            </div>
+
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold">Net Amount</span>
+                            </div>
+                            <div className="border border-gray-800 p-2">
+                                <span className="font-semibold"> ₹ {data.netamount}</span>
+                            </div>
+
 
                         </div>
                     </div>

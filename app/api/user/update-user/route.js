@@ -1,6 +1,8 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
+import OrderModel from "@/model/Order";
 import bcrypt from "bcryptjs";
+import PaymentHistoryModel from "@/model/PaymentHistory";
 
 export async function PATCH(req) {
     await dbConnect();
@@ -23,20 +25,69 @@ export async function PATCH(req) {
             );
         }
 
-        // If usertype is "1", perform activation logic
+        // Activation logic
         if (data.usertype === "1") {
             data.activedate = new Date();
 
-            const activesp = Number(data.activesp || 0);
+            // 1. Get orders of user where status = true
+            const orders = await OrderModel.find({
+                dscode: user.dscode,
+                status: true,
+            });
 
+            // 2. Separate orders by salegroup
+            let saoTotal = 0;
+            let sgoTotal = 0;
+
+            for (const order of orders) {
+                const sp = Number(order.totalsp || 0);
+                if (order.salegroup === "SAO") saoTotal += sp;
+                if (order.salegroup === "SGO") sgoTotal += sp;
+            }
+
+            // 3. Deduct from active user's saosp & sgosp
+            const newSaosp = Math.max(0, (Number(user.saosp || 0) - saoTotal));
+            const newSgosp = Math.max(0, (Number(user.sgosp || 0) - sgoTotal));
+
+            data.saosp = newSaosp.toString();
+            data.sgosp = newSgosp.toString();
+
+            const totalSPTransferred = saoTotal + sgoTotal;
+
+            // 4. Transfer SP to upperline user based on active user's group
+            const upperlineUser = await UserModel.findOne({ dscode: user.pdscode });
+
+            if (upperlineUser) {
+                const upperData = {};
+
+                if (user.group === "SAO") {
+                    upperData.saosp = (Number(upperlineUser.saosp || 0) + totalSPTransferred).toString();
+                } else if (user.group === "SGO") {
+                    upperData.sgosp = (Number(upperlineUser.sgosp || 0) + totalSPTransferred).toString();
+                }
+
+                await UserModel.updateOne({ _id: upperlineUser._id }, { $set: upperData });
+                await PaymentHistoryModel.create({
+                    dsid: upperlineUser.dscode,
+                    dsgroup: upperlineUser.group,
+                    amount: "0", // no actual monetary transfer
+                    sp: totalSPTransferred.toString(),
+                    group: user.group, // active user's group
+                    type: "user active",
+                    referencename: user.dscode,
+                    pairstatus: false,
+                    monthlystatus: false,
+                });
+
+            }
         }
 
-        // Only hash password if it's changed
+        // Only hash password if changed
         if (data.password && data.password !== user.password) {
             data.password = await bcrypt.hash(data.password, 10);
         }
 
-        // Add new level info if provided
+        // Add level info if provided
         if (data.level) {
             data.LevelDetails = [
                 ...(user.LevelDetails || []),
@@ -48,7 +99,7 @@ export async function PATCH(req) {
             ];
         }
 
-        // Final user update
+        // Final update
         await UserModel.updateOne({ _id: data.id }, { $set: data });
 
         return new Response(
@@ -59,7 +110,7 @@ export async function PATCH(req) {
     } catch (error) {
         console.error("User update error:", error);
         return new Response(
-            JSON.stringify({ success: false, message: "Internal server error. Try again later. its live now" }),
+            JSON.stringify({ success: false, message: "Internal server error. Try again later." }),
             { status: 500 }
         );
     }
