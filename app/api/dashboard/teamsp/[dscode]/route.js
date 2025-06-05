@@ -56,12 +56,24 @@ export async function GET(request) {
 
     const directChildren = allUsersMap.get(ds) || [];
 
-    // Counters
+    // Preload all orders for all users once to avoid repeated DB hits
+    const allUserCodes = allUsers.map(u => u.dscode);
+    const allOrders = await OrderModel.find({
+      dscode: { $in: allUserCodes },
+      status: true
+    });
+
+    const orderMap = new Map();
+    for (const order of allOrders) {
+      const code = order.dscode;
+      if (!orderMap.has(code)) orderMap.set(code, []);
+      orderMap.get(code).push(order);
+    }
+
     let totalSGO = 0, totalSAO = 0;
     let totalActiveSGO = 0, totalActiveSAO = 0;
     let totalEarnSP = 0, totalSaoSP = 0, totalSgoSP = 0;
 
-    // ✅ Include self user in counters
     if (mainUser.group === "SAO") {
       totalSAO += 1;
       if (mainUser.usertype === "1") totalActiveSAO += 1;
@@ -81,12 +93,11 @@ export async function GET(request) {
     for (const child of directChildren) {
       const visited = new Set();
       const subTree = await buildSubTree(child.dscode, allUsersMap, visited);
-      const fullGroup = [child, ...subTree]; // Include the direct child
+      const fullGroup = [child, ...subTree];
 
       const isSAO = child.group === "SAO";
       const isSGO = child.group === "SGO";
 
-      // Count total members & actives
       if (isSAO) {
         totalSAO += fullGroup.length;
         totalActiveSAO += fullGroup.filter(u => u.usertype === "1").length;
@@ -95,27 +106,39 @@ export async function GET(request) {
         totalActiveSGO += fullGroup.filter(u => u.usertype === "1").length;
       }
 
-      // Accumulate ALL SP (earnsp + saosp + sgosp) into the direct child group bucket
-      fullGroup.forEach(u => {
+      for (const u of fullGroup) {
         if (u.usertype !== "0") {
           totalEarnSP += parseFloat(u.earnsp) || 0;
+        }
 
-          const totalUserSP =
-            (parseFloat(u.saosp) || 0) +
-            (parseFloat(u.sgosp) || 0);
+        const totalUserSP =
+          (parseFloat(u.saosp) || 0) +
+          (parseFloat(u.sgosp) || 0);
+
+        if (isSAO) {
+          totalSaoSP += totalUserSP;
+        } else if (isSGO) {
+          totalSgoSP += totalUserSP;
+        }
+
+        if (u.usertype === "0") {
+          const orders = orderMap.get(u.dscode) || [];
+          let userActualSP = 0;
+          orders.forEach(order => {
+            userActualSP += parseFloat(order.totalsp) || 0;
+          });
 
           if (isSAO) {
-            totalSaoSP += totalUserSP;
+            totalSaoSP -= userActualSP;
           } else if (isSGO) {
-            totalSgoSP += totalUserSP;
+            totalSgoSP -= userActualSP;
           }
         }
-      });
+      }
     }
 
-
-
     const totalIncome = (parseFloat(mainUser.earnsp) || 0) * 10;
+
     const startOfWeek = moment().startOf("week").toDate();
     const endOfWeek = moment().endOf("week").toDate();
 
