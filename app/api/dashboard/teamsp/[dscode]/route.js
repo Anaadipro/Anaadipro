@@ -96,21 +96,44 @@ export async function GET(request) {
       }
 
       // Accumulate ALL SP (earnsp + saosp + sgosp) into the direct child group bucket
-      fullGroup.forEach(u => {
-        if (u.usertype !== "0") {
-          totalEarnSP += parseFloat(u.earnsp) || 0;
+   for (const u of fullGroup) {
+  if (u.usertype !== "0") {
+    totalEarnSP += parseFloat(u.earnsp) || 0;
+  }
 
-          const totalUserSP =
-            (parseFloat(u.saosp) || 0) +
-            (parseFloat(u.sgosp) || 0);
+  const totalUserSP =
+    (parseFloat(u.saosp) || 0) +
+    (parseFloat(u.sgosp) || 0);
 
-          if (isSAO) {
-            totalSaoSP += totalUserSP;
-          } else if (isSGO) {
-            totalSgoSP += totalUserSP;
-          }
-        }
-      });
+  if (isSAO) {
+    totalSaoSP += totalUserSP;
+  } else if (isSGO) {
+    totalSgoSP += totalUserSP;
+  }
+
+  // Subtract actual order SP only for usertype === "0"
+  if (u.usertype === "0") {
+    const userOrders = await OrderModel.find({
+      dscode: u.dscode,
+      status: true
+    });
+
+    let userActualSP = 0;
+
+    userOrders.forEach(order => {
+      const sp = parseFloat(order.totalsp) || 0;
+      userActualSP += sp;
+    });
+
+    // Subtract their actual order SP
+    if (isSAO) {
+      totalSaoSP -= userActualSP;
+    } else if (isSGO) {
+      totalSgoSP -= userActualSP;
+    }
+  }
+}
+
     }
 
 
