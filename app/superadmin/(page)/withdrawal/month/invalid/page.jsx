@@ -114,8 +114,8 @@ export default function Page() {
                 <th className="p-3 border">IFSC</th>
                 <th className="p-3 border">Bank</th>
                 <th className="p-3 border">Amount</th>
-               <th className="p-3 border">Admin Charge (5%)</th>
-                <th className="p-3 border">TDS (3%)</th>
+                <th className="p-3 border">Admin Charge (3%)</th>
+                <th className="p-3 border">TDS (2%)</th>
                 <th className="p-3 border">Pay Amount</th>
                 <th className="p-3 border">Date</th>
                 <th className="p-3 border">Reason</th>
