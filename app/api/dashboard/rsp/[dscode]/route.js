@@ -26,11 +26,10 @@ export async function GET(request, { params }) {
             }
         }
 
-        // Fetch all self orders
         const selfOrders = await OrderModel.find({ dscode, status: true }).lean();
 
-        // Build team hierarchy
-       const allUsers = await UserModel.find({}).select("dscode pdscode group").lean();
+        const allUsers = await UserModel.find({}).select("dscode pdscode group activedate").lean();
+        const userMapFull = new Map(allUsers.map(u => [u.dscode, u]));
 
         const userMap = new Map();
         allUsers.forEach(user => {
@@ -50,9 +49,6 @@ export async function GET(request, { params }) {
         const teamDSCodes = Array.from(collectTeamCodes(dscode));
         const teamOrders = await OrderModel.find({ dscode: { $in: teamDSCodes }, status: true }).lean();
 
-        // === CALCULATIONS ===
-
-        // Total & Weekly self
         const selfTotalOrders = selfOrders.length;
         const selfTotalsp = selfOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
         const selfWeekOrders = selfOrders.filter(o =>
@@ -61,7 +57,6 @@ export async function GET(request, { params }) {
         const selfCurrentWeekOrders = selfWeekOrders.length;
         const selfCurrentWeekTotal = selfWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
 
-        // SAOSP & SGOSP - self (current week)
         const selfweeksaosp = selfWeekOrders
             .filter(o => o.salegroup === "SAO")
             .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
@@ -69,42 +64,43 @@ export async function GET(request, { params }) {
             .filter(o => o.salegroup === "SGO")
             .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
 
-        // RSP Helper (remove lowest orderNo)
-        function getRSP(orders) {
-            if (orders.length <= 1) return 0;
-            const minOrderNo = Math.min(...orders.map(o => parseInt(o.orderNo || "0")));
+        function getRSP(orders, activedate) {
+            if (!activedate) return 0;
             return orders
-                .filter(o => parseInt(o.orderNo || "0") !== minOrderNo)
+                .filter(o => new Date(o.createdAt) >= new Date(activedate))
                 .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
         }
 
-        function getTeamRSP(orders, weekOnly = false) {
-            const userMap = new Map();
+        function getTeamRSP(orders, allUsersMap, weekOnly = false) {
+            const userOrderMap = new Map();
+
             for (const order of orders) {
                 if (weekOnly && !moment(order.createdAt).isBetween(weekStart, weekEnd, null, "[]")) continue;
-
-                if (!userMap.has(order.dscode)) userMap.set(order.dscode, []);
-                userMap.get(order.dscode).push(order);
+                if (!userOrderMap.has(order.dscode)) userOrderMap.set(order.dscode, []);
+                userOrderMap.get(order.dscode).push(order);
             }
 
             let total = 0;
-            for (const orders of userMap.values()) {
-                if (orders.length <= 1) continue;
-                const minOrderNo = Math.min(...orders.map(o => parseInt(o.orderNo || "0")));
-                total += orders
-                    .filter(o => parseInt(o.orderNo || "0") !== minOrderNo)
-                    .reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
+
+            for (const [dscode, userOrders] of userOrderMap.entries()) {
+                const user = allUsersMap.get(dscode);
+                const activedate = user?.activedate;
+                if (!activedate) continue;
+
+                const eligibleOrders = userOrders.filter(o => new Date(o.createdAt) >= new Date(activedate));
+                total += eligibleOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
             }
+
             return total;
         }
 
-        const selfRSPAll = getRSP(selfOrders);
-        const selfRSPWeek = getRSP(selfWeekOrders);
+        const selfUser = userMapFull.get(dscode);
+        const selfRSPAll = getRSP(selfOrders, selfUser?.activedate);
+        const selfRSPWeek = getRSP(selfWeekOrders, selfUser?.activedate);
 
-        const teamRSPAll = getTeamRSP(teamOrders);
-        const teamRSPWeek = getTeamRSP(teamOrders, true);
+        const teamRSPAll = getTeamRSP(teamOrders, userMapFull);
+        const teamRSPWeek = getTeamRSP(teamOrders, userMapFull, true);
 
-        // Team Total & Weekly (includes self)
         const teamTotalOrders = teamOrders.length;
         const teamTotalsp = teamOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
         const teamWeekOrders = teamOrders.filter(o =>
@@ -113,55 +109,48 @@ export async function GET(request, { params }) {
         const teamCurrentWeekOrders = teamWeekOrders.length;
         const teamCurrentWeekTotal = teamWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalsp), 0);
 
-        // SAOSP & SGOSP - team (includes self, current week)
-       // Map all users: dscode -> user object (with group info)
-const userMapFull = new Map(allUsers.map(u => [u.dscode, u]));
+        const directDownlines = allUsers.filter(u => u.pdscode === dscode);
 
-// Get direct downlines
-const directDownlines = allUsers.filter(u => u.pdscode === dscode);
-
-// Map: each user -> their direct SAO/SGO parent under main user
-const userToDirectGroupMap = new Map();
-for (const child of directDownlines) {
-    userToDirectGroupMap.set(child.dscode, child);
-}
-
-function mapToDirectGroup(userCode) {
-    if (userToDirectGroupMap.has(userCode)) return userToDirectGroupMap.get(userCode);
-
-    const visited = new Set();
-    let current = userMapFull.get(userCode);
-    while (current && !visited.has(current.dscode)) {
-        visited.add(current.dscode);
-        const parentCode = current.pdscode;
-        if (!parentCode) break;
-        if (userToDirectGroupMap.has(parentCode)) {
-            const direct = userToDirectGroupMap.get(parentCode);
-            userToDirectGroupMap.set(userCode, direct);
-            return direct;
+        const userToDirectGroupMap = new Map();
+        for (const child of directDownlines) {
+            userToDirectGroupMap.set(child.dscode, child);
         }
-        current = userMapFull.get(parentCode);
-    }
-    return null;
-}
 
-let teamweeksaosp = 0;
-let teamweeksgosp = 0;
+        function mapToDirectGroup(userCode) {
+            if (userToDirectGroupMap.has(userCode)) return userToDirectGroupMap.get(userCode);
 
-for (const order of teamWeekOrders) {
-    const owner = order.dscode;
+            const visited = new Set();
+            let current = userMapFull.get(userCode);
+            while (current && !visited.has(current.dscode)) {
+                visited.add(current.dscode);
+                const parentCode = current.pdscode;
+                if (!parentCode) break;
+                if (userToDirectGroupMap.has(parentCode)) {
+                    const direct = userToDirectGroupMap.get(parentCode);
+                    userToDirectGroupMap.set(userCode, direct);
+                    return direct;
+                }
+                current = userMapFull.get(parentCode);
+            }
+            return null;
+        }
 
-    if (owner === dscode) {
-        const selfUser = userMapFull.get(dscode);
-        if (selfUser?.group === "SAO") teamweeksaosp += parseFloat(order.totalsp);
-        else if (selfUser?.group === "SGO") teamweeksgosp += parseFloat(order.totalsp);
-    } else {
-        const direct = mapToDirectGroup(owner);
-        if (direct?.group === "SAO") teamweeksaosp += parseFloat(order.totalsp);
-        else if (direct?.group === "SGO") teamweeksgosp += parseFloat(order.totalsp);
-    }
-}
+        let teamweeksaosp = 0;
+        let teamweeksgosp = 0;
 
+        for (const order of teamWeekOrders) {
+            const owner = order.dscode;
+
+            if (owner === dscode) {
+                const selfUser = userMapFull.get(dscode);
+                if (selfUser?.group === "SAO") teamweeksaosp += parseFloat(order.totalsp);
+                else if (selfUser?.group === "SGO") teamweeksgosp += parseFloat(order.totalsp);
+            } else {
+                const direct = mapToDirectGroup(owner);
+                if (direct?.group === "SAO") teamweeksaosp += parseFloat(order.totalsp);
+                else if (direct?.group === "SGO") teamweeksgosp += parseFloat(order.totalsp);
+            }
+        }
 
         return Response.json({
             success: true,

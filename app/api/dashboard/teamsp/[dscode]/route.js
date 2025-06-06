@@ -161,22 +161,24 @@ export async function GET(request) {
       mainUser: {
         dscode: mainUser.dscode,
         level: mainUser.level,
-        saosp: mainUser.saosp,
-        sgosp: mainUser.sgosp,
-        earnsp: mainUser.earnsp,
+        saosp: Number((parseFloat(mainUser.saosp) || 0).toFixed(2)),
+        sgosp: Number((parseFloat(mainUser.sgosp) || 0).toFixed(2)),
+        earnsp: Number((parseFloat(mainUser.earnsp) || 0).toFixed(2)),
         group: mainUser.group,
       },
+
       totalSGO,
       totalSAO,
       totalActiveSGO,
       totalActiveSAO,
-      totalEarnSP,
-      totalSaoSP,
-      totalSgoSP,
-      totalIncome,
-      currentWeekSaoSP,
-      currentWeekSgoSP,
+      totalEarnSP: Number(totalEarnSP.toFixed(2)),
+      totalSaoSP: Number(totalSaoSP.toFixed(2)),
+      totalSgoSP: Number(totalSgoSP.toFixed(2)),
+      totalIncome: Number(totalIncome.toFixed(2)),
+      currentWeekSaoSP: Number(currentWeekSaoSP.toFixed(2)),
+      currentWeekSgoSP: Number(currentWeekSgoSP.toFixed(2)),
     }, { status: 200 });
+
 
   } catch (error) {
     console.error("Error getting team stats:", error);
