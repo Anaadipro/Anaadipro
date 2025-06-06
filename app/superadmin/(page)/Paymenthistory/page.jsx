@@ -23,7 +23,7 @@ export default function PaymentHistoryPage() {
     setLoading(true)
     try {
       const res = await axios.get(`/api/PaymentHistory/get`, {
-        params: { page, dsid, type, status,closingstatus, fromDate, toDate }
+        params: { page, dsid, type, status, closingstatus, fromDate, toDate }
       })
       setData(res.data.data)
       setTotalPages(res.data.totalPages)
@@ -40,7 +40,8 @@ export default function PaymentHistoryPage() {
 
   const types = [
     'order',
-    'update user',
+    'user active',
+    'SP transferred to upperline',
     'level update',
     'superadmin gift sp',
     'superadmin remove sp',
@@ -75,7 +76,7 @@ export default function PaymentHistoryPage() {
           <option value='false'>❌ False</option>
         </select>
 
-         <select
+        <select
           className="border p-2 rounded"
           value={closingstatus}
           onChange={(e) => setClosingStatus(e.target.value)}>

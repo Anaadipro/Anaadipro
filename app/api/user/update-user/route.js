@@ -67,17 +67,32 @@ export async function PATCH(req) {
                 }
 
                 await UserModel.updateOne({ _id: upperlineUser._id }, { $set: upperData });
+                // Upperline user gets SP
                 await PaymentHistoryModel.create({
                     dsid: upperlineUser.dscode,
                     dsgroup: upperlineUser.group,
-                    amount: "0", // no actual monetary transfer
+                    amount: "0",
                     sp: totalSPTransferred.toString(),
-                    group: user.group, // active user's group
+                    group: user.group,
                     type: "user active",
                     referencename: user.dscode,
                     pairstatus: false,
                     monthlystatus: false,
                 });
+
+                // Active user loses SP
+                await PaymentHistoryModel.create({
+                    dsid: user.dscode,
+                    dsgroup: user.group,
+                    amount: "0",
+                    sp: `-${totalSPTransferred}`,
+                    group: user.group,
+                    type: "SP transferred to upperline",
+                    referencename: upperlineUser?.dscode || "",
+                    pairstatus: false,
+                    monthlystatus: false,
+                });
+
 
             }
         }
