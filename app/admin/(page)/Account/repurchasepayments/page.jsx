@@ -1,149 +1,179 @@
-"use client"
+"use client";
+
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-export default function Statement() {
+export default function Page() {
   const { data: session } = useSession();
-  const [userdscode, setUserdscode] = useState(null);
+  const [userdscode, setUserdscode] = useState("");
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [totalIncome, setTotalIncome] = useState(0);
+
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+
+  // Controlled filter state to apply on button click
+  const [filterFromDate, setFilterFromDate] = useState(null);
+  const [filterToDate, setFilterToDate] = useState(null);
 
   useEffect(() => {
     if (!session?.user?.email) return;
+
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
+        const response = await axios.get(
+          `/api/user/find-admin-byemail/${session.user.email}`
+        );
         setUserdscode(response.data.dscode);
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
     };
+
     fetchUserData();
   }, [session?.user?.email]);
 
-  const fetchData = async () => {
+  useEffect(() => {
     if (!userdscode) return;
-    setLoading(true);
-    try {
-      const response = await axios.get(`/api/statement/repurchase/${userdscode}`, {
-        params: { dateFrom, dateTo },
-      });
 
-      const fetchedData = response.data?.data || [];
-      setData(fetchedData);
-      setFilteredData(fetchedData);
-      calculateTotalIncome(fetchedData);
-    } catch (error) {
-      console.error("Error fetching statement data:", error);
-    } finally {
-      setLoading(false);
-    }
+    const fetchOrders = async () => {
+      setLoading(true);
+
+      try {
+        let url = `/api/account/repurchase/${userdscode}`;
+        const params = [];
+
+        if (filterFromDate) {
+          const from = new Date(filterFromDate);
+          from.setHours(0, 0, 0, 0);
+          params.push(`dateFrom=${from.toISOString().split("T")[0]}`);
+        }
+
+        if (filterToDate) {
+          const to = new Date(filterToDate);
+          to.setHours(23, 59, 59, 999);
+          params.push(`dateTo=${to.toISOString().split("T")[0]}`);
+        }
+
+        if (params.length) {
+          url += `?${params.join("&")}`;
+        }
+
+        const res = await axios.get(url);
+        setOrders(res.data.orders || []);
+      } catch (err) {
+        console.error("Failed to fetch orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [userdscode, filterFromDate, filterToDate]);
+
+  // Handler for Apply button
+  const handleApply = () => {
+    setFilterFromDate(fromDate);
+    setFilterToDate(toDate);
   };
 
-  const resetFilter = () => {
-    setDateFrom("");
-    setDateTo("");
-    setData([]); // Clear data on reset
-    setFilteredData([]);
-    setTotalIncome(0);
-  };
-
-  const calculateTotalIncome = (data) => {
-    const income = data.reduce((sum, entry) => sum + (entry.totalsp * 10), 0);
-    setTotalIncome(income);
-  };
-
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filteredData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, " Statement");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "Statement.xlsx");
+  // Handler for Clear Filters button
+  const handleClear = () => {
+    setFromDate(null);
+    setToDate(null);
+    setFilterFromDate(null);
+    setFilterToDate(null);
   };
 
   return (
-    <div className="mx-auto lg:p-6 p-2 bg-white dark:bg-gray-700 shadow-lg rounded-lg text-gray-700 dark:text-white">
-      <h2 className="text-2xl font-semibold mb-4 text-center">My Repurchase Payments</h2>
-      <p className="text-lg font-bold mb-4 text-center">Total Income: ₹{totalIncome}</p>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-4 underline">Repurchase</h2>
 
-      <div className="grid grid-cols-2 gap-4 mb-4 items-end">
+      <div className="flex gap-4 mb-4 items-end">
         <div>
-          <label className="block text-sm font-medium">Date From</label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            onClick={(e) => e.target.showPicker()}
-            className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white cursor-pointer"
+          <label className="block mb-1 font-medium text-gray-700">From Date</label>
+          <DatePicker
+            selected={fromDate}
+            onChange={(date) => setFromDate(date)}
+            dateFormat="yyyy-MM-dd"
+            className="border border-gray-500 px-2 py-1 w-40 text-gray-800"
+            placeholderText="Select start date"
+            maxDate={new Date()}
+            isClearable
           />
         </div>
+
         <div>
-          <label className="block text-sm font-medium">Date To</label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            onClick={(e) => e.target.showPicker()}
-            max={new Date().toISOString().split("T")[0]}
-            className="border rounded-lg p-2 w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white cursor-pointer"
+          <label className="block mb-1 font-medium text-gray-700">To Date</label>
+          <DatePicker
+            selected={toDate}
+            onChange={(date) => setToDate(date)}
+            dateFormat="yyyy-MM-dd"
+            className="border border-gray-500 px-2 py-1 w-40 text-gray-800"
+            placeholderText="Select end date"
+            maxDate={new Date()}
+            isClearable
           />
         </div>
-      </div>
 
-      <div className="flex gap-2">
-        <button
-          onClick={fetchData}
-          className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 text-lg"
-        >
-          Show
-        </button>
-        <button
-          onClick={resetFilter}
-          className="bg-gray-500 text-white px-3 py-1 rounded-lg hover:bg-gray-600 text-lg"
-        >
-          Reset
-        </button>
+        <div>
+          <button
+            onClick={handleApply}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Apply
+          </button>
+        </div>
+
+        <div>
+          <button
+            onClick={handleClear}
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition"
+          >
+            Clear
+          </button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-center p-4 text-gray-500">Loading...</div>
-      ) : filteredData.length > 0 ? (
-        <table className="w-full border-collapse border border-gray-300 rounded-lg overflow-hidden mt-4">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-600">
-              <th className="border border-gray-300 px-1 text-sm py-2">SN</th>
-              <th className="border border-gray-300 px-1 text-sm py-2">Date</th>
-              <th className="border border-gray-300 px-1 text-sm py-2">Total Sp</th>
-              <th className="border border-gray-300 px-1 text-sm py-2">Total Income</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((entry, index) => (
-              <tr key={index} className="text-center bg-white dark:bg-gray-800">
-                <td className="border border-gray-300 px-1 py-2">{index+1}</td>
-                <td className="border border-gray-300 px-1 py-2">{new Date(entry.createdAt).toLocaleDateString("en-GB")}</td>
-                <td className="border border-gray-300 px-1 py-2">{entry.totalsp}</td>
-                <td className="border border-gray-300 px-1 py-2">{entry.totalsp * 10}</td>
+        <p>Loading orders...</p>
+      ) : orders.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-400 text-left text-gray-800">
+            <thead className="bg-gray-100 border-b border-gray-400">
+              <tr>
+                <th className="px-4 py-2 border-r">S. No.</th>
+                <th className="px-4 py-2 border-r">Order No</th>
+                <th className="px-4 py-2 border-r">Order Date</th>
+                <th className="px-4 py-2 border-r">Amount</th>
+                <th className="px-4 py-2 border-r">Sp</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((order, index) => (
+                <tr
+                  key={order._id}
+                  className="border-t border-gray-300 hover:bg-gray-50"
+                >
+                  <td className="px-4 py-2 border-r">{index + 1}</td>
+                  <td className="px-4 py-2 border-r">{order.orderNo}</td>
+                  <td className="px-4 py-2 border-r">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-2 border-r text-green-700 font-semibold">
+                    ₹{parseFloat(order.netamount).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2">{parseFloat(order.totalsp).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <p className="text-center p-4 text-gray-500">No Data Found</p>
-      )}
-
-      {filteredData.length > 0 && (
-        <button onClick={exportToExcel} className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-          Export to Excel
-        </button>
+        <p>No orders found after activation date.</p>
       )}
     </div>
   );

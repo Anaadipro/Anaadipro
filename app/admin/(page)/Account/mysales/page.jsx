@@ -1,201 +1,143 @@
 "use client";
-import React, { useState, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-function normalizeDate(dateStr) {
-  if (!dateStr) return "";
-  if (dateStr.includes("-")) return dateStr;
-
-  const parts = dateStr.split("/");
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  return dateStr;
-}
-
 export default function Page() {
   const { data: session } = useSession();
-  const [rawData, setRawData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+  const [dsid, setDsid] = useState("");
+  const [totals, setTotals] = useState({});
+  const [tempFromDate, setTempFromDate] = useState(null);
+  const [tempToDate, setTempToDate] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+
+  const formatDate = (date) => {
+    if (!date) return null;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchTotals = async (params = {}) => {
+    try {
+      const res = await axios.get("/api/PaymentHistory/get", { params });
+      setTotals(res.data.totals || {});
+      setDateRange({
+        from: params.fromDate || "Start",
+        to: params.toDate || "End",
+      });
+    } catch (error) {
+      console.error("Error fetching totals:", error);
+    }
+  };
 
   useEffect(() => {
+    if (!session?.user?.email) return;
+
     const fetchUserData = async () => {
-      if (!session?.user?.email) return;
-      setLoading(true);
       try {
-        const response = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
-        if (response.data?.WalletDetails) {
-          setRawData(response.data.WalletDetails);
-        }
+        const res = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
+        setDsid(res.data.dscode);
+        fetchTotals({ dsid: res.data.dscode });
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
-        toast.error("Failed to load data");
-      } finally {
-        setLoading(false);
+        console.error("Error fetching user:", error);
       }
     };
 
     fetchUserData();
   }, [session?.user?.email]);
-  useEffect(() => {
-    const grouped = {};
 
-    rawData.forEach(item => {
-      const normDate = normalizeDate(item.date); // Normalize the date
-      const sg = parseFloat(item.salecommission || 0); // Only use salesgrowth
+  const handleApply = () => {
+    if (!dsid) return;
 
-      if (!grouped[normDate]) grouped[normDate] = 0;
-      grouped[normDate] += sg;
-    });
+    const params = { dsid };
+    if (tempFromDate) params.fromDate = formatDate(tempFromDate);
+    if (tempToDate) params.toDate = formatDate(tempToDate);
+    fetchTotals(params);
+  };
 
-    let result = Object.entries(grouped).map(([date, total], index) => ({
-      id: index + 1,
-      from: date,
-      to: date,
-      amount: total,
-    }));
-
-    // Optional date filtering
-    if (fromDate || toDate) {
-      result = result.filter(entry => {
-        const entryDate = new Date(entry.from);
-        const from = fromDate ? new Date(fromDate) : null;
-        const to = toDate ? new Date(toDate) : null;
-
-        if (from) from.setHours(0, 0, 0, 0); // Start of the day
-        if (to) to.setHours(23, 59, 59, 999); // End of the day
-
-        return (!from || entryDate >= from) && (!to || entryDate <= to);
-      });
-    }
-
-    // Sort results by date descending
-    result.sort((a, b) => (a.from < b.from ? 1 : -1));
-
-    // Update state
-    setFilteredData(result);
-  }, [rawData, fromDate, toDate]);
-
-
-  const exportToExcel = () => {
-    const csvRows = [
-      ["S.No", "From", "To", "Amount (₹)"],
-      ...filteredData.map((item) => [
-        item.id,
-        item.from,
-        item.to,
-        item.amount.toFixed(2),
-      ]),
-    ];
-
-    const csvString = csvRows.map(row => row.join(",")).join("\n");
-    const blob = new Blob([csvString], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "total_income.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleReset = () => {
+    setTempFromDate(null);
+    setTempToDate(null);
+    if (dsid) fetchTotals({ dsid });
   };
 
   return (
-    <div className="p-4 md:p-6 text-sm">
-      <Toaster />
-      <h1 className="text-xl md:text-2xl text-blue-400 capitalize   border-b pb-2 mb-4 ">
-        Monthly Sale Commission
-      </h1>
+   <div className="p-4 max-w-7xl mx-auto">
+  <h1 className="text-xl font-semibold mb-4 text-center">My Team Summary</h1>
 
-      <div className="flex flex-wrap gap-4 items-end mb-6">
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">From Date</label>
-          <DatePicker
-            selected={fromDate}
-            onChange={(date) => setFromDate(date)}
-            dateFormat="yyyy-MM-dd"
-            className="border border-gray-500 px-2 py-1 w-40 text-gray-800"
-            placeholderText="Select date"
-            maxDate={new Date()}
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">To Date</label>
-          <DatePicker
-            selected={toDate}
-            onChange={(date) => setToDate(date)}
-            dateFormat="yyyy-MM-dd"
-            className="border border-gray-500 px-2 py-1 w-40 text-gray-800"
-            placeholderText="Select date"
-            maxDate={new Date()}
-          />
-        </div>
-
-        {(fromDate || toDate) && (
-          <button
-            onClick={() => {
-              setFromDate(null);
-              setToDate(null);
-            }}
-            className="text-red-600 underline text-sm"
-          >
-            Clear Filters
-          </button>
-        )}
-
-        <button
-          onClick={exportToExcel}
-          className="ml-auto bg-green-600 hover:bg-green-700 text-white px-4 py-1 border border-green-800"
-        >
-          Export to Excel
-        </button>
-      </div>
-
-      {loading ? (
-        <p className="text-gray-600">Loading...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-400 text-left text-gray-800">
-            <thead className="bg-gray-100 border-b border-gray-400">
-              <tr>
-                <th className="px-4 py-2 border-r">S. No.</th>
-                <th className="px-4 py-2 border-r">From</th>
-                <th className="px-4 py-2 border-r">To</th>
-                <th className="px-4 py-2">Bonus</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-500">
-                    No data found
-                  </td>
-                </tr>
-              ) : (
-                filteredData.map((item ,index) => (
-                  <tr key={item.id} className="border-t border-gray-300 hover:bg-gray-50">
-                    <td className="px-4 py-2 border-r">{index+1}</td>
-                    <td className="px-4 py-2 border-r">{item.from}</td>
-                    <td className="px-4 py-2 border-r">{item.to}</td>
-                    <td className="px-4 py-2 text-green-700 font-semibold">
-                      ₹{item.amount.toLocaleString()}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+  {/* Date Filter */}
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5 text-sm">
+    <div>
+      <label className="block text-xs font-medium mb-1">From Date</label>
+      <DatePicker
+        selected={tempFromDate}
+        onChange={(date) => setTempFromDate(date)}
+        className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none"
+        placeholderText="From"
+        dateFormat="yyyy-MM-dd"
+        maxDate={new Date()}
+      />
     </div>
+    <div>
+      <label className="block text-xs font-medium mb-1">To Date</label>
+      <DatePicker
+        selected={tempToDate}
+        onChange={(date) => setTempToDate(date)}
+        className="w-full border border-gray-300 p-2 rounded text-sm focus:outline-none"
+        placeholderText="To"
+        dateFormat="yyyy-MM-dd"
+        maxDate={new Date()}
+      />
+    </div>
+    <div className="flex gap-2 items-end">
+      <button
+        onClick={handleApply}
+        className="bg-blue-600 text-white py-2 px-3 rounded hover:bg-blue-700 w-full text-sm"
+      >
+        Apply
+      </button>
+      <button
+        onClick={handleReset}
+        className="bg-gray-300 text-gray-800 py-2 px-3 rounded hover:bg-gray-400 w-full text-sm"
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+
+  {/* Summary Table */}
+  <div className="overflow-x-auto text-sm">
+    <table className="w-full border-collapse border border-gray-300 shadow-sm rounded-md bg-white">
+      <thead className="bg-blue-50 text-gray-700 text-sm">
+        <tr>
+          <th className="px-4 py-2 text-left border">From</th>
+          <th className="px-4 py-2 text-left border">To</th>
+          <th className="px-4 py-2 text-right border">Total SP</th>
+          <th className="px-4 py-2 text-right border">SAO SP</th>
+          <th className="px-4 py-2 text-right border">SGO SP</th>
+          <th className="px-4 py-2 text-right border">Matching Income</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="hover:bg-blue-50 text-sm">
+          <td className="px-4 py-2 border">{dateRange.from}</td>
+          <td className="px-4 py-2 border">{dateRange.to}</td>
+          <td className="px-4 py-2 border text-right">{totals.totalsp || 0}</td>
+          <td className="px-4 py-2 border text-right">{totals.totalsaosp || 0}</td>
+          <td className="px-4 py-2 border text-right">{totals.totalsgosp || 0}</td>
+          <td className="px-4 py-2 border text-right">
+            {(Math.min(Number(totals.totalsaosp || 0), Number(totals.totalsgosp || 0)) * 10).toFixed(2)}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
   );
 }
