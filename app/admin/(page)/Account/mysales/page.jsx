@@ -24,7 +24,7 @@ export default function Page() {
 
   const fetchTotals = async (params = {}) => {
     try {
-      const res = await axios.get("/api/PaymentHistory/get", { params });
+      const res = await axios.get("/api/account/get", { params });
       setTotals(res.data.totals || {});
       setDateRange({
         from: params.fromDate || "Start",
