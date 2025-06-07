@@ -45,18 +45,22 @@ export default function Page() {
       try {
         setLoading(true);
         const res = await axios.get(`/api/user/find-admin-byemail/${session.user.email}`);
+        console.log("Admin API response:", res.data);
         const code = res.data.dscode;
         setDsid(code);
 
         const totalsRes = await axios.get("/api/account/get", { params: { dsid: code } });
+        console.log("Totals API response:", totalsRes.data);
         setTotals(totalsRes.data.totals || {});
         setDateRange({
           from: totalsRes.data.totals?.fromDate || "Start",
           to: totalsRes.data.totals?.toDate || "End",
         });
 
-        if (res.data?.WalletDetails) {
+        if (Array.isArray(res.data.WalletDetails) && res.data.WalletDetails.length > 0) {
           setRawData(res.data.WalletDetails);
+        } else {
+          setRawData([]); // explicitly clear if no data
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -70,8 +74,29 @@ export default function Page() {
   }, [session?.user?.email]);
 
   useEffect(() => {
-    const grouped = {};
+    // If no rawData but totals exist, show a single summary row
+    if ((!rawData || rawData.length === 0) && totals) {
+      const matchingIncome = Math.min(
+        Number(totals.totalsaosp || 0),
+        Number(totals.totalsgosp || 0)
+      ) * 10;
 
+      setFilteredData([
+        {
+          id: 1,
+          from: totals.fromDate || "Start",
+          to: totals.toDate || "End",
+          salesgrowth: 0,
+          performance: 0,
+          matchingIncome,
+          amount: matchingIncome,
+        },
+      ]);
+      return;
+    }
+
+    // Otherwise, group rawData by normalized date and compute sums
+    const grouped = {};
     rawData.forEach((item) => {
       const normDate = normalizeDate(item.date);
       const sg = parseFloat(item.salesgrowth || 0);
@@ -102,6 +127,7 @@ export default function Page() {
       };
     });
 
+    // Filter by date range if set
     if (fromDate || toDate) {
       result = result.filter((entry) => {
         const entryDate = new Date(entry.from);
@@ -115,7 +141,9 @@ export default function Page() {
       });
     }
 
+    // Sort descending by date
     result.sort((a, b) => (a.from < b.from ? 1 : -1));
+
     setFilteredData(result);
   }, [rawData, fromDate, toDate, totals]);
 
@@ -162,6 +190,7 @@ export default function Page() {
       })
       .catch((err) => {
         console.error("Error fetching totals:", err);
+        toast.error("Failed to fetch filtered totals");
       });
   };
 
@@ -225,12 +254,11 @@ export default function Page() {
         </button>
       </div>
 
-
       {loading ? (
         <div className="text-center text-blue-600 py-10 text-lg font-medium">
           Loading data, please wait...
         </div>
-      ) : (
+      ) : filteredData.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-400 text-left text-gray-800">
             <thead className="bg-gray-100 border-b border-gray-400">
@@ -267,6 +295,8 @@ export default function Page() {
             </tbody>
           </table>
         </div>
+      ) : (
+        <div className="text-center py-10 text-gray-600">No data available for the selected filters.</div>
       )}
     </div>
   );
