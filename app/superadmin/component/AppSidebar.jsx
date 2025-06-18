@@ -27,6 +27,7 @@ const navItems = [
             { name: "Susspend User ID", path: "/superadmin/Userprofile/susspenduser", pro: false },
             { name: "Level Achivers", path: "/superadmin/Userprofile/levelachivers", pro: false },
             { name: "All User", path: "/superadmin/Userprofile/user", pro: false },
+            { name: "Pending Sp", path: "/superadmin/Userprofile/pendingsp", pro: false },
         ],
     },
     {

@@ -74,22 +74,28 @@ export async function GET(request) {
     let totalActiveSGO = 0, totalActiveSAO = 0;
     let totalEarnSP = 0, totalSaoSP = 0, totalSgoSP = 0;
 
-    if (mainUser.group === "SAO") {
-      totalSAO += 1;
-      if (mainUser.usertype === "1") totalActiveSAO += 1;
+    // --- SELF USER ("mainUser") CALCULATIONS ---
+    // This block correctly checks usertype for the main user's SP contributions.
+    if (mainUser.usertype === "0") {
+      if (mainUser.group === "SAO") {
+        totalSAO += 1;
+        totalActiveSAO += 1;
+        totalSaoSP += parseFloat(mainUser.saosp) || 0;
+        totalSgoSP += parseFloat(mainUser.sgosp) || 0;
+      }
+
+      if (mainUser.group === "SGO") {
+        totalSGO += 1;
+        totalActiveSGO += 1;
+        totalSaoSP += parseFloat(mainUser.saosp) || 0;
+        totalSgoSP += parseFloat(mainUser.sgosp) || 0;
+      }
+
       totalEarnSP += parseFloat(mainUser.earnsp) || 0;
-      totalSaoSP += parseFloat(mainUser.saosp) || 0;
-      totalSgoSP += parseFloat(mainUser.sgosp) || 0;
     }
 
-    if (mainUser.group === "SGO") {
-      totalSGO += 1;
-      if (mainUser.usertype === "1") totalActiveSGO += 1;
-      totalEarnSP += parseFloat(mainUser.earnsp) || 0;
-      totalSaoSP += parseFloat(mainUser.saosp) || 0;
-      totalSgoSP += parseFloat(mainUser.sgosp) || 0;
-    }
 
+    // --- TEAM CALCULATIONS ---
     for (const child of directChildren) {
       const visited = new Set();
       const subTree = await buildSubTree(child.dscode, allUsersMap, visited);
@@ -100,40 +106,29 @@ export async function GET(request) {
 
       if (isSAO) {
         totalSAO += fullGroup.length;
-        totalActiveSAO += fullGroup.filter(u => u.usertype === "1").length;
+        totalActiveSAO += fullGroup.filter(u => u.usertype === "0").length;
       } else if (isSGO) {
         totalSGO += fullGroup.length;
-        totalActiveSGO += fullGroup.filter(u => u.usertype === "1").length;
+        totalActiveSGO += fullGroup.filter(u => u.usertype === "0").length;
       }
 
       for (const u of fullGroup) {
-        if (u.usertype !== "0") {
+        // *** MODIFICATION START ***
+        // Only include SP data for users with usertype "0" as requested.
+        if (u.usertype == "0") {
           totalEarnSP += parseFloat(u.earnsp) || 0;
-        }
 
-        const totalUserSP =
-          (parseFloat(u.saosp) || 0) +
-          (parseFloat(u.sgosp) || 0);
-
-        if (isSAO) {
-          totalSaoSP += totalUserSP;
-        } else if (isSGO) {
-          totalSgoSP += totalUserSP;
-        }
-
-        if (u.usertype === "0") {
-          const orders = orderMap.get(u.dscode) || [];
-          let userActualSP = 0;
-          orders.forEach(order => {
-            userActualSP += parseFloat(order.totalsp) || 0;
-          });
+          const totalUserSP =
+            (parseFloat(u.saosp) || 0) +
+            (parseFloat(u.sgosp) || 0);
 
           if (isSAO) {
-            totalSaoSP -= userActualSP;
+            totalSaoSP += totalUserSP;
           } else if (isSGO) {
-            totalSgoSP -= userActualSP;
+            totalSgoSP += totalUserSP;
           }
         }
+        // *** MODIFICATION END ***
       }
     }
 
@@ -142,7 +137,7 @@ export async function GET(request) {
     const today = moment();
     const dayOfWeek = today.isoWeekday(); // Monday = 1, Sunday = 7
 
-    const daysSinceWednesday = (dayOfWeek >= 4) ? dayOfWeek - 4 : 7 - (4 - dayOfWeek);
+    const daysSinceWednesday = (dayOfWeek >= 3) ? dayOfWeek - 3 : 7 - (3 - dayOfWeek);
     const startOfWeek = today.clone().subtract(daysSinceWednesday, 'days').startOf('day');
     const endOfWeek = startOfWeek.clone().add(6, 'days').endOf('day');
 
@@ -170,7 +165,6 @@ export async function GET(request) {
         earnsp: Number((parseFloat(mainUser.earnsp) || 0).toFixed(2)),
         group: mainUser.group,
       },
-
       totalSGO,
       totalSAO,
       totalActiveSGO,

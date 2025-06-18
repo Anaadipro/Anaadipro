@@ -5,6 +5,7 @@ import Dashboard3 from "@/components/Dashboard/Dashboard3";
 import Dashboard4 from "@/components/Dashboard/Dashboard4";
 import Image from 'next/image';
 import Cookies from 'js-cookie';
+import Timer from "@/components/Timer/Timer"
 export default function page() {
   const [showModal, setShowModal] = useState(false);
   
@@ -19,6 +20,7 @@ export default function page() {
   return (
     <>
       {/* <Dashboard2 /> */}
+      <Timer/>
       <Dashboard1 />
       <Dashboard3 />
       <Dashboard4 />

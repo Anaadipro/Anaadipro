@@ -300,19 +300,23 @@ export default function OrderDetails({ data }) {
                             <span className="font-semibold">Name: </span>{data.dsname}
                         </div>
                         <div className="border border-gray-800 p-2">
-                            <span className="font-semibold">Address: </span>{data.address}
+                            <span className="font-semibold">DSID: </span>{data.dscode}
+
                         </div>
                         <div className="border border-gray-800 p-2">
                             <span className="font-semibold">Address: </span>{data.shippingAddress},{data.shippinpPincode}
                         </div>
                         <div className="border border-gray-800 p-2">
-                            <span className="font-semibold">Mobile No: </span>{data.mobileno}
+                            <span className="font-semibold">Address: </span>{data.address}
+
                         </div>
                         <div className="border border-gray-800 p-2">
                             <span className="font-semibold">Pincode: </span>{data.shippinpPincode}
 
                         </div>
-                        <div className="border border-gray-800 p-2">
+                          <div className="border border-gray-800 p-2">
+                            <span className="font-semibold">Mobile No: </span>{data.mobileno}
+
                         </div>
                         <div className="border border-gray-800 p-2">
                             <span className="font-semibold">Mobile No: </span>{data.shippingmobile}

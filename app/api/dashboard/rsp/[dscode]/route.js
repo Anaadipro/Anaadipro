@@ -12,8 +12,14 @@ export async function GET(request, { params }) {
         const dateFrom = url.searchParams.get("dateFrom");
         const dateTo = url.searchParams.get("dateTo");
 
-        const weekStart = moment().startOf("isoWeek").toDate();
-        const weekEnd = moment().endOf("isoWeek").toDate();
+        const today = moment();
+        const dayOfWeek = today.isoWeekday(); // 1 (Mon) to 7 (Sun)
+
+        // Calculate how many days to subtract to get to last Thursday
+        const daysSinceWednesday = (dayOfWeek >= 4) ? dayOfWeek - 4 : 7 - (4 - dayOfWeek);
+        const weekStart = today.clone().subtract(daysSinceWednesday, 'days').startOf('day');
+        const weekEnd = weekStart.clone().add(6, 'days').endOf('day');
+
 
         const baseFilter = { dscode, status: true };
         if (dateFrom || dateTo) {

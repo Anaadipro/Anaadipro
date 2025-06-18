@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Dashboard1 from "@/components/Dashboard/Dashboard1";
 import Dashboard4 from "@/components/Dashboard/Dashboard4";
 import Cookies from 'js-cookie';
-
+import Timer from "@/components/Timer/Timer"
 export default function Page() {
   const [showModal, setShowModal] = useState(false);
 
@@ -18,18 +18,19 @@ export default function Page() {
 
   return (
     <>
+      <Timer />
       <Dashboard1 />
       <Dashboard4 />
 
       {showModal && (
-       <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center ">
-       <div className="bg-white rounded-lg shadow-xl overflow-y-auto max-h-screen w-full md:w-4/5 lg:w-3/4 px-6 py-12 relative">
-         <button
-           onClick={() => setShowModal(false)}
-           className="absolute top-6 right-4 text-white bg-red-600 hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-50"
-         >
-           ×
-         </button>
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center ">
+          <div className="bg-white rounded-lg shadow-xl overflow-y-auto max-h-screen w-full md:w-4/5 lg:w-3/4 px-6 py-12 relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-6 right-4 text-white bg-red-600 hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-50"
+            >
+              ×
+            </button>
 
             <div className="text-center mb-6">
               <div className="flex justify-center">
