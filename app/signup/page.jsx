@@ -150,21 +150,21 @@ export default function Signup() {
     };
 
 
- const handleImageUpload = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    setIsSubmitting(true);
-    
-    try {
-        const response = await axios.post("/api/upload", formData);
-        setIsSubmitting(false); // ✅ move before return
-        return response.data.file.secure_url;
-    } catch (error) {
-        console.error("Image upload failed:", error);
-        setIsSubmitting(false); // ✅ move before return
-        return null;
-    }
-};
+    const handleImageUpload = async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        setIsSubmitting(true);
+
+        try {
+            const response = await axios.post("/api/upload", formData);
+            setIsSubmitting(false); // ✅ move before return
+            return response.data.file.secure_url;
+        } catch (error) {
+            console.error("Image upload failed:", error);
+            setIsSubmitting(false); // ✅ move before return
+            return null;
+        }
+    };
 
 
 
@@ -426,6 +426,8 @@ export default function Signup() {
                                     <option value="Mother">Mother</option>
                                     <option value="Wife">Wife</option>
                                     <option value="Sister">Sister</option>
+                                    <option value="Son">Son</option>
+                                    <option value="Daughter">Daughter</option>
                                 </select>
                                 {errors.nomineeRelation && <p className="text-red-500 text-xs">{errors.nomineeRelation}</p>}
                             </div>
