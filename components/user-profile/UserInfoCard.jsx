@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-
+import { signOut } from "next-auth/react";
 export default function UserInfocard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: session, update } = useSession();
@@ -12,6 +12,7 @@ export default function UserInfocard() {
     const [formData, setFormData] = useState({
         name: "",
         dob: "",
+        email: "",
         mobileNo: "",
         fatherOrHusbandName: "",
         gender: "",
@@ -30,6 +31,7 @@ export default function UserInfocard() {
                     setFormData({
                         name: response.data.name || "",
                         dob: response.data.dob || "",
+                        email: response.data.email || "",
                         mobileNo: response.data.mobileNo || "",
                         fatherOrHusbandName: response.data.fatherOrHusbandName || "",
                         gender: response.data.gender || "",
@@ -66,8 +68,15 @@ export default function UserInfocard() {
             if (response.data.success) {
                 alert("User updated successfully");
                 setIsModalOpen(false);
-                update(); // Refresh session data if needed
-                window.location.reload();
+                const emailChanged = data.email !== formData.email;
+
+                if (emailChanged) {
+                    // If email changed, log the user out
+                    signOut({ callbackUrl: "/" }); // Redirect to homepage after sign out
+                } else {
+                    update(); // Refresh session data if needed
+                    window.location.reload();
+                }
             }
         } catch (error) {
             console.error("Failed to update user:", error);
@@ -230,6 +239,7 @@ export default function UserInfocard() {
                                     {[
                                         { label: "DS Name *", name: "name", type: "text" },
                                         { label: "D.O.B.", name: "dob", type: "date" },
+                                        { label: "Email", name: "email", type: "email" },
                                         { label: "Phone", name: "mobileNo", type: "text" },
                                         { label: "Father's Name *", name: "fatherOrHusbandName", type: "text" },
                                         { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Other"] },
