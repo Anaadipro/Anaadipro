@@ -16,6 +16,8 @@ const ProductSchema = new Schema(
         sgst: { type: String, },
         igst: { type: String, },
 
+        quantity: { type: String, },
+
         defaultdata: { type: String, required: true, default: "product" }
 
     },
@@ -23,6 +25,6 @@ const ProductSchema = new Schema(
 );
 
 const ProductModel =
-    mongoose.models.Producttest7 || mongoose.model("Producttest7", ProductSchema);
+    mongoose.models.Producttest8 || mongoose.model("Producttest8", ProductSchema);
 
 export default ProductModel

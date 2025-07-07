@@ -18,7 +18,8 @@ export default function AddOrUpdateProductPage() {
         taxvalue: "",
         cgst: "",
         sgst: "",
-        igst: ""
+        igst: "",
+        quantity:""
     });
 
     const [productGroups, setProductGroups] = useState([]);
@@ -63,6 +64,7 @@ export default function AddOrUpdateProductPage() {
                         cgst: fetchedData.cgst || "",
                         sgst: fetchedData.sgst || "",
                         igst: fetchedData.igst || "",
+                        quantity:fetchedData.quantity || ""
 
 
                     });
@@ -97,7 +99,7 @@ export default function AddOrUpdateProductPage() {
     // Handle Submit (Add or Update)
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.productname || !formData.group || !formData.dp || !formData.sp || !formData.mrp || !formData.hsn || !formData.taxvalue || !formData.igst || loading) {
+        if (!formData.productname || !formData.group || !formData.dp || !formData.sp || !formData.mrp || !formData.hsn || !formData.taxvalue || !formData.igst || !formData.quantity || loading) {
             setError("All fields are required.");
             return;
         }
@@ -119,7 +121,8 @@ export default function AddOrUpdateProductPage() {
                     taxvalue: "",
                     cgst: "",
                     sgst: "",
-                    igst: ""
+                    igst: "",
+                    quantity:""
                 });
             }
         } catch (error) {
@@ -211,6 +214,12 @@ export default function AddOrUpdateProductPage() {
                     <label className="block mb-1 font-medium">IGST</label>
                     <input type="text" name="igst" placeholder="IGST" value={formData.igst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
                 </div>
+
+                <div>
+                    <label className="block mb-1 font-medium">Avaliable Quantity</label>
+                    <input type="text" name="quantity" placeholder="Avaliable Quantity" value={formData.quantity} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+                </div>
+
 
                 <div>
                     <label className="block mb-1 font-medium">Product Image</label>

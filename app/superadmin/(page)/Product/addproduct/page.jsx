@@ -15,7 +15,9 @@ export default function AddProductPage() {
     taxvalue: "",
     cgst: "",
     sgst: "",
-    igst: ""
+    igst: "",
+
+    quantity:""
   });
 
   const [productGroups, setProductGroups] = useState([]);
@@ -71,7 +73,8 @@ export default function AddProductPage() {
 
       formData.hsn.trim() &&
       formData.taxvalue.trim() &&
-      formData.igst.trim()
+      formData.igst.trim() &&
+      formData.quantity.trim()
 
 
 
@@ -93,7 +96,8 @@ export default function AddProductPage() {
         taxvalue: "",
         cgst: "",
         sgst: "",
-        igst: ""
+        igst: "",
+        quantity:""
       });
     } catch (error) {
       setError(error.response?.data?.message || "Failed to add product.");
@@ -123,6 +127,7 @@ export default function AddProductPage() {
         <input type="number" name="cgst" placeholder="CGST" min={0} value={formData.cgst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
         <input type="number" name="sgst" placeholder="SGST" min={0} value={formData.sgst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />
         <input type="number" name="igst" placeholder="IGST" min={0} value={formData.igst} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
+        <input type="number" name="quantity" placeholder="Avaliable Quantity" min={0} value={formData.quantity} onChange={handleChange} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" required />
 
 
         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} className="w-full p-3 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200" />

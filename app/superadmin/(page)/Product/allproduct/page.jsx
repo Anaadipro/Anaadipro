@@ -138,6 +138,7 @@ export default function Page() {
                 <th className="py-4 px-6 text-sm text-left">Group</th>
                 <th className="py-4 px-6 text-sm text-left">Sp</th>
                 <th className="py-4 px-6 text-sm text-left">Mrp</th>
+                <th className="py-4 px-6 text-sm text-left">Avaliable Quantity</th>
                 <th className="py-4 px-6 text-sm text-left">Discount Price</th>
                 <th className="py-4 px-6 text-sm text-left">Action</th>
               </tr>
@@ -165,6 +166,7 @@ export default function Page() {
                   <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{product.group}</td>
                   <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{product.sp}</td>
                   <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{product.mrp}</td>
+                  <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{product.quantity || "N/A"}</td>
                   <td className="py-4 px-6 text-sm font-semibold text-indigo-700 dark:text-indigo-400">
                     ₹{product.dp}
                   </td>

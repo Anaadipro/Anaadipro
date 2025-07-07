@@ -20,6 +20,8 @@ export default function Page() {
     const [dsid, setDsid] = useState("");
     const [userdata, setUserdata] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [hasOutOfStock, setHasOutOfStock] = useState(false);
+
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split("T")[0],
         transactionId: "",
@@ -87,7 +89,13 @@ export default function Page() {
                 const totalNetAmount = cartData.reduce((sum, entry) => sum + parseFloat(entry.netamount || "0"), 0);
                 const totalSp = cartData.reduce((sum, entry) => sum + parseFloat(entry.totalsp || "0"), 0);
                 const shippingCharge = totalNetAmount > 2000 ? 0 : 70;
+                const outOfStockExists = allProductDetails.some(item => {
+                    const requested = parseInt(item.quantity || "0", 10);
+                    const available = parseInt(item.availableQuantity || "0", 10);
+                    return requested > available;
+                });
 
+                setHasOutOfStock(outOfStockExists);
                 setFormData(prev => ({
                     ...prev,
                     dscode: dsid,
@@ -253,12 +261,19 @@ export default function Page() {
 
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting}
-                        className={`mt-4 px-6 py-2 rounded transition-all ${submitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        disabled={submitting || hasOutOfStock}
+                        className={`mt-4 px-6 py-2 rounded transition-all ${submitting || hasOutOfStock
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
                             }`}
                     >
-                        {submitting ? "Submitting..." : "Submit Order"}
+                        {submitting
+                            ? "Submitting..."
+                            : hasOutOfStock
+                                ? "Out of Stock"
+                                : "Submit Order"}
                     </button>
+
 
                 </div>
             </div>
