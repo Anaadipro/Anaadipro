@@ -273,7 +273,7 @@ export default function OrderDetails({ data }) {
                                 <th className="border p-1">Taxable Amount</th>
                                 <th className="border p-1">CGST <span className="text-xs block">Rate Amount</span></th>
                                 <th className="border p-1">SGST <span className="text-xs block">Rate Amount</span></th>
-                                <th className="border p-1">IGST <span className="text-xs block">Rate Amount</span></th>
+                                <th className="border p-1">IGST <span className="text-xs block">Amount</span></th>
                                 <th className="border p-1">Tax Rate</th>
                                 <th className="border p-1">Total SP</th>
                                 <th className="border p-1">Total Amount</th>
@@ -304,8 +304,8 @@ export default function OrderDetails({ data }) {
                                         <td className="border p-1">{taxableValue.toFixed(2)}</td>
                                         <td className="border p-1">{`${matched.cgst || "-"}`}</td>
                                         <td className="border p-1">{`${matched.sgst || "-"}`}</td>
-                                        <td className="border p-1">{`${matched.igst || "-"}`}</td>
-                                        <td className="border p-1">{extractMainValue(matched.igst) ? `${extractMainValue(matched.igst)}` : "-"} </td>
+                                        <td className="border p-1">  {(extractMainValue(matched.igst) ?? 0) * (quantity ?? 0) || "-"}</td>
+                                        <td className="border p-1">{`${matched.igst || "-"}`} </td>
                                         <td className="border p-1">{(matched.sp * quantity).toFixed(2)}</td>
                                         <td className="border p-1">{totalAmount.toFixed(2)}</td>
                                     </tr>
