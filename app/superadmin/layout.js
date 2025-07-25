@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { useSidebar } from "../context/SidebarContext";
 import AppHeader from "@/components/AppHeader";
 import AppSidebar from "./component/AppSidebar";
+import { Analytics } from "@vercel/analytics/next"
+
 import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +37,7 @@ export default function SuperAdminLayout({ children }) {
           <AppHeader />
           <div className="p-4 mx-auto max-w-(--breakpoint-2xl) bg-white dark:bg-gray-800 md:p-6">{children}</div>
         </div>
+        <Analytics/>
       </div>
 
     </>
