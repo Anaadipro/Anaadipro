@@ -54,9 +54,9 @@ export async function POST(req) {
 
   try {
     const allUsers = await UserModel.find().lean();
-    const allPayments = await PaymentHistoryModel.find({ pairstatus: false }).lean();
+    const allPayments = await PaymentHistoryModel.find().lean(); // ✅ Get all payments, regardless of pairstatus
 
-    const { pdscodeToUsers, dscodeToUser } = buildUserGraph(allUsers);
+    const { pdscodeToUsers } = buildUserGraph(allUsers);
     const paymentsByDsId = new Map();
 
     for (const payment of allPayments) {
@@ -66,16 +66,23 @@ export async function POST(req) {
       paymentsByDsId.get(payment.dsid).push(payment);
     }
 
-    const successfulDsids = [];
+    const usedPaymentIds = new Set();
 
     for (const user of allUsers) {
       const dsid = user.dscode;
       const { allDsCodes, saoDsCodes, sgoDsCodes } = traverseDownlines(dsid, pdscodeToUsers);
 
-      const allRelevantPayments = Array.from(allDsCodes).flatMap(id => paymentsByDsId.get(id) || []);
+      const allRelevantPayments = Array.from(allDsCodes).flatMap(
+        id => paymentsByDsId.get(id) || []
+      );
 
-      const saoDownlines = allRelevantPayments.filter(p => saoDsCodes.has(p.dsid));
-      const sgoDownlines = allRelevantPayments.filter(p => sgoDsCodes.has(p.dsid));
+      const saoDownlines = allRelevantPayments.filter(
+        p => saoDsCodes.has(p.dsid)
+      );
+      const sgoDownlines = allRelevantPayments.filter(
+        p => sgoDsCodes.has(p.dsid)
+      );
+
       const mainUserPayments = paymentsByDsId.get(dsid) || [];
 
       for (const pay of mainUserPayments) {
@@ -86,13 +93,13 @@ export async function POST(req) {
       const totalsaosp = saoDownlines.reduce((acc, cur) => acc + Number(cur.sp || 0), 0);
       const totalsgosp = sgoDownlines.reduce((acc, cur) => acc + Number(cur.sp || 0), 0);
 
-      const matchingSP = Math.min(totalsaosp, totalsgosp);
-      const totalAmount = matchingSP * 10;
+      const matchedSP = Math.min(totalsaosp, totalsgosp);
+      const lastMatched = Number(user.lastMatchedSP || 0);
+      const newMatchingSP = matchedSP - lastMatched;
 
-      if (totalAmount <= 0) continue;
+      if (newMatchingSP <= 0) continue;
 
-      successfulDsids.push(dsid);
-
+      const totalAmount = newMatchingSP * 10;
       const charges = totalAmount * 0.05;
       const payamount = totalAmount - charges;
 
@@ -109,15 +116,31 @@ export async function POST(req) {
       });
 
       await closingEntry.save();
+
+      // ✅ Update user's lastMatchedSP
+      await UserModel.updateOne(
+        { dscode: dsid },
+        { $set: { lastMatchedSP: String(lastMatched + newMatchingSP) } }
+      );
+
+      // ✅ Only mark unpaired payments (pairstatus: false) used in this closing
+      const unpairedSaoUsed = saoDownlines.filter(p => p.pairstatus === false);
+      const unpairedSgoUsed = sgoDownlines.filter(p => p.pairstatus === false);
+      unpairedSaoUsed.forEach(p => usedPaymentIds.add(p._id.toString()));
+      unpairedSgoUsed.forEach(p => usedPaymentIds.add(p._id.toString()));
     }
 
-    await PaymentHistoryModel.updateMany(
-      { dsid: { $in: successfulDsids }, pairstatus: false },
-      { $set: { pairstatus: true } }
-    );
+    if (usedPaymentIds.size > 0) {
+      await PaymentHistoryModel.updateMany(
+        { _id: { $in: Array.from(usedPaymentIds) } },
+        { $set: { pairstatus: true } }
+      );
+    }
 
     return new Response(
-      JSON.stringify({ message: "Closing history created for users with amount > 0 and unpaid pairs only." }),
+      JSON.stringify({
+        message: "Closing history created. SP calculated from all payments. Pairstatus updated only for unpaired payments used.",
+      }),
       { status: 200 }
     );
   } catch (error) {

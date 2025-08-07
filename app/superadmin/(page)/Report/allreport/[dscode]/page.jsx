@@ -30,7 +30,7 @@ export default function Page() {
   return (
     <div className="p-6 space-y-6">
       {/* Date Filter UI */}
-      <div className="bg-white p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-center gap-4">
+      {/* <div className="bg-white p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-center gap-4">
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">From Date</label>
           <DatePicker
@@ -64,7 +64,7 @@ export default function Page() {
         >
           Filter
         </button>
-      </div>
+      </div> */}
 
       {/* Dashboard Components */}
       <Dashboard1 dscode={dscode} fromDate={filterDates.from} toDate={filterDates.to} />
