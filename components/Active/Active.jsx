@@ -63,7 +63,7 @@ export default function Active({ userData }) {
     const availableOptions = getOptions();
 
     if (availableOptions.length === 0) {
-      setErrorMessage("You don't have sufficient SP to activate.");
+      setErrorMessage("You don't have sufficient SP to activate...");
       return;
     }
 
