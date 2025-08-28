@@ -386,6 +386,7 @@ export default function Signup() {
                                     <option value="SELF-EMPLOYED">SELF-EMPLOYED</option>
                                     <option value="STUDENT">STUDENT</option>
                                     <option value="RETIRED">RETIRED</option>
+                                    <option value=">House-Wife">House-Wife</option>
                                     <option value="OTHER">OTHER</option>
                                 </select>
                                 {errors.profession && <p className="text-red-500 text-xs">{errors.profession}</p>}
@@ -425,6 +426,7 @@ export default function Signup() {
                                     <option value="Friend">Friend</option>
                                     <option value="Mother">Mother</option>
                                     <option value="Wife">Wife</option>
+                                    <option value="Husband">Husband</option>
                                     <option value="Sister">Sister</option>
                                     <option value="Son">Son</option>
                                     <option value="Daughter">Daughter</option>
