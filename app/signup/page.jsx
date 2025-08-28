@@ -219,6 +219,11 @@ export default function Signup() {
 
     const allChecked = checkboxes.every((item) => item);
 
+function getMaxDOB() {
+  const today = new Date();
+  today.setFullYear(today.getFullYear() - 18); // Subtract 18 years
+  return today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+}
 
     return (
         <section className="min-h-screen flex items-center justify-center px-4 bg-gray-100">
@@ -368,7 +373,7 @@ export default function Signup() {
                             {/*  */}
                             <div className="lg:col-span-1">
                                 <label className="text-gray-700 text-sm font-semibold">DOB</label>
-                                <input type="date" name="dob" value={formData.dob} onChange={handleChange} className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
+                                <input max={getMaxDOB()} type="date" name="dob" value={formData.dob} onChange={handleChange} className="block w-full px-4 py-3 text-gray-500 bg-white border border-gray-200 rounded-md appearance-none placeholder:text-gray-400 focus:border-[#161950] focus:outline-none focus:ring-[#161950] sm:text-sm" required />
                                 {errors.dob && <p className="text-red-500 text-xs">{errors.dob}</p>}
                             </div>
 
