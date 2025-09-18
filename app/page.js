@@ -77,7 +77,7 @@ With ANAADIPRO WELLNESS, it’s not just about products — it’s about buildin
       />
       <ContentCard
         title="Latest Products"
-        description="We are a Health Products Selling company founded by business professionals. At Asclepius Wellness, we create dynamic entrepreneurs through the promotion of high-quality wellness products."
+        description="We are a Health Products Selling company founded by business professionals. At ANAADIPRO WELLNESS, we create dynamic entrepreneurs through the promotion of high-quality wellness products."
       />
       <ProductCard />
       <Footer />
