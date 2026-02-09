@@ -118,8 +118,8 @@ export default function Page() {
           <th className="px-4 py-2 text-left border">From</th>
           <th className="px-4 py-2 text-left border">To</th>
           <th className="px-4 py-2 text-right border">Total SP</th>
-          <th className="px-4 py-2 text-right border">SAO SP</th>
-          <th className="px-4 py-2 text-right border">SGO SP</th>
+          <th className="px-4 py-2 text-right border">SAO SP </th>
+          <th className="px-4 py-2 text-right border">SGO SP </th>
           <th className="px-4 py-2 text-right border">Matching Income</th>
         </tr>
       </thead>
