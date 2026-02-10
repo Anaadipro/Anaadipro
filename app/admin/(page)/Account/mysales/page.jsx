@@ -127,7 +127,7 @@ export default function Page() {
         <tr className="hover:bg-blue-50 text-sm">
           <td className="px-4 py-2 border">{dateRange.from}</td>
           <td className="px-4 py-2 border">{dateRange.to}</td>
-          <td className="px-4 py-2 border text-right">{totals.totalsp || 0}</td>
+          <td className="px-4 py-2 border text-right">{totals.totalsp || 0}  </td>
           <td className="px-4 py-2 border text-right">{totals.totalsaosp || 0}</td>
           <td className="px-4 py-2 border text-right">{totals.totalsgosp || 0}</td>
           <td className="px-4 py-2 border text-right">
