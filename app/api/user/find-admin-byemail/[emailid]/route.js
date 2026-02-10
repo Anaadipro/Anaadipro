@@ -6,7 +6,7 @@ export async function GET(request, { params }) {
   await dbConnect();
 
   try {
-    const { emailid } = params;
+    const { emailid } = await params;
 
     const user = await UserModel.findOne({ email: emailid });
     if (!user) {

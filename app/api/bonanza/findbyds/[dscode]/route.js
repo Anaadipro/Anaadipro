@@ -5,7 +5,7 @@ export const GET = async (request, { params }) => {
   await dbConnect();
 
   try {
-    const { dscode } = params; // Extract dscode from the URL
+    const { dscode } = await params; // Extract dscode from the URL
 
     if (!dscode) {
       return Response.json(

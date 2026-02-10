@@ -5,7 +5,7 @@ export async function PUT(request, { params }) {
   await dbConnect();
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     const updatedLevel = await LevelsModel.findByIdAndUpdate(id, body, {

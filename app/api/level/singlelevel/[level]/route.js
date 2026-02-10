@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
   await dbConnect();
 
   try {
-    const { level } = params;  // Get level from dynamic route
+    const { level } = await params;  // Get level from dynamic route
 
     const users = await UserModel.find({ level });
 

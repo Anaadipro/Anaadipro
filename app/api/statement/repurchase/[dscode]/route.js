@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     try {
-        const dscode = decodeURIComponent(params?.dscode || "");
+        const {dscode} = await params;
         const url = new URL(request.url);
         const dateFrom = url.searchParams.get("dateFrom");
         const dateTo = url.searchParams.get("dateTo");

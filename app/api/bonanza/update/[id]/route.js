@@ -5,7 +5,7 @@ export async function PATCH(req, { params }) {
     await dbConnect();
 
     try {
-        const { id } = params;
+        const { id } = await params;
         const data = await req.json();
 
         const updatedProduct = await BonanzaModel.findByIdAndUpdate(id, data, { new: true });

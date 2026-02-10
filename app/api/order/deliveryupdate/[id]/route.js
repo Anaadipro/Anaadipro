@@ -5,7 +5,7 @@ export async function PATCH(req, { params }) {
     await dbConnect();
 
     try {
-        const { id } = params;
+        const { id } = await params;
         const { deliver } = await req.json();
 
         if (typeof deliver !== 'boolean') {

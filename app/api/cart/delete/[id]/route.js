@@ -5,7 +5,7 @@ export async function DELETE(req, { params }) {
   await dbConnect();
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const deletedProduct = await CartModel.findByIdAndDelete(id);
 

@@ -6,8 +6,8 @@ export async function GET(request, { params }) {
   await dbConnect();
 
   try {
-    const { id } = params;
-
+    const { id } = await params;
+    console.log("Finding user with id:", id);
     const user = await UserModel.findOne({ dscode: id });
     if (!user) {
       return Response.json(

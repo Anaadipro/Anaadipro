@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     try {
-        const type = decodeURIComponent(params?.type || "");
+        const {type} = await params;
 
         const data = await OrderModel.find({  status: type });
 

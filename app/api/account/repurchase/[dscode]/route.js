@@ -8,7 +8,7 @@ export async function GET(req, { params }) {
   await dbConnect();
 
   try {
-    const { dscode } = params;
+    const { dscode } = await params;
     const { searchParams } = new URL(req.url);
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");

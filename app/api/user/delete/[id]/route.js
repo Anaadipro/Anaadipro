@@ -6,7 +6,7 @@ export async function DELETE(req, { params }) {
     await dbConnect();
 
     try {
-        const { id } = params;
+        const { id } = await params;
 
         const deletedUser = await UserModel.findOneAndDelete({ email: id });
 

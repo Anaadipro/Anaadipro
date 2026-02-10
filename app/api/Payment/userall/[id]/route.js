@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     try {
-        const id = decodeURIComponent(params?.id || "");
+        const {id} = await params;
 
         const data = await PaymentModel.find({ dsid: id });
 
