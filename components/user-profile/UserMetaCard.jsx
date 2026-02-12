@@ -137,7 +137,7 @@ export default function UserMetaCard() {
                                 </div>
                                 <div>
                                     <h2 className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium px-3 py-1 rounded text-sm shadow">
-                                        Sponsor DS Name : {data?.name}
+                                        Sponsor DS Name : {data?.sponsorname}
                                     </h2>
                                 </div>
                                 <div

@@ -19,6 +19,16 @@ export async function GET(request, { params }) {
       );
     }
 
+
+    let sponsorName = "N/A";
+    if (user.pdscode && user.pdscode !== "0") {
+      const sponsor = await UserModel.findOne({ dscode: user.pdscode });
+      if (sponsor) {
+        sponsorName = sponsor.name;
+      }
+    }
+
+
     let totalBonusIncome = 0;
     let totalPerformanceIncome = 0;
 
@@ -46,6 +56,7 @@ export async function GET(request, { params }) {
     return Response.json(
       {
         ...user._doc,
+        sponsorname: sponsorName,
         totalBonusIncome,
         totalPerformanceIncome,
         success: true,

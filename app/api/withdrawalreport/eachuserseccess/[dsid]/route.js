@@ -7,10 +7,10 @@ export const GET = async (request, { params }) => {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
-  const dscode = params.dsid;
+  const {dsid} = await params;
 
   const filter = {
-    dsid: dscode,
+    dsid: dsid,
     status: true,
   };
 
@@ -23,7 +23,7 @@ export const GET = async (request, { params }) => {
     const total = await ClosingHistoryModel.countDocuments(filter);
 
     return Response.json({
-      message: "Data fetched successfully!",
+      message: "Data fetched successfully! 5",
       success: true,
       data,
       total,
