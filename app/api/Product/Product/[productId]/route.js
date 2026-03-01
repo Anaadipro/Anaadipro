@@ -5,7 +5,7 @@ export async function GET(req, { params }) {
     await dbConnect();
 
     try {
-        const { productId } = params;
+        const { productId } = await params;
         const product = await ProductModel.findById(productId);
 
         if (!product) {
